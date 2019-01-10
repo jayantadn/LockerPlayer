@@ -1,4 +1,29 @@
-function db_touch # param = (opt) file path
+# MIT License
+
+# Copyright (c) 2019 Jayanta Debnath
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+movie_ext_arr=("m4v" "f4v" "mp4" "MP4" "mkv" "avi" "wmv" "flv" "mov" "mpg" "mpeg" "264")
+
+# param = (opt) file path
+function db_touch 
 {
 	if [ $# -eq 0 ]
 	then
@@ -11,19 +36,25 @@ function db_touch # param = (opt) file path
 	fi
 }
 
-function db_add # param = title, rel_path
+# param = title, rel_path
+function db_add 
 {
 	if [ $# -eq 0 ]
 	then
-		echo "Please provide an argument to $FUNCNAME"
+		echo "Please provide proper arguments to $FUNCNAME"
 		return
 	else
-		echo "Adding to database: $2"
+		ext=`echo $1 | rev | cut -d"." -f1 | rev`
+		for var in ${movie_ext_arr[*]}
+		do
+			if [ $var == $ext ]
+			then
+				echo "Adding to database: $2"
+				let max_id++
+				echo "$max_id,0,0,Unknown,Straight,$1,$2,0,0" >> "$DATABASE"				
+			fi
+		done
 	fi
-
-	let max_id++
-	
-	echo "$max_id,0,0,Unknown,Straight,$1,$2,0,0" >> "$DATABASE"
 }
 
 function db_add_new_files
