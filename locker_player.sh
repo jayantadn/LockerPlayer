@@ -315,47 +315,6 @@ function get_config
 	readonly DATABASE="$CONFIG_DIR/database.csv"
 }
 
-function update_actor_name
-{
-	echo "Determining actor name from file path"
-	
-	while read line 
-	do
-		flg=false
-		
-		echo $line | grep "Videobox" > /dev/null
-		[ $? -eq 0 ] && flg=true
-		
-		echo $line | grep "Naughty America" > /dev/null
-		[ $? -eq 0 ] && flg=true
-		
-		echo $line | grep "2018_begin" > /dev/null
-		[ $? -eq 0 ] && flg=true
-
-		if [ $flg == true ]
-		then
-			cur_actor=`echo "$line" | awk -F, '{print $4}'`
-			actor=`echo "$line" | awk -F, '{ split($7, arr, "/"); print arr[2]; }'`
-			title=`echo "$line" | awk -F, '{print $6}'`
-			[ "$cur_actor" == "Unknown" ] && db_update "$title" "actor=$actor"
-		fi
-	done < "$DATABASE"
-}
-
-function update_rating_from_filename
-{
-	echo "Determining rating from file name"
-	
-	while read line 
-	do
-		cur_rating=`echo "$line" | awk -F, '{print $2}'`
-		[ "$cur_rating" == "rating" ] && continue
-		rating=`echo "$line" | awk -F, '{print $6}' | cut -b 1 | grep [0-9]`
-		title=`echo "$line" | awk -F, '{print $6}'`
-		[ "$cur_rating" == "0" ] && ! [ -z $rating ] && db_update "$title" "rating=$rating"
-	done < "$DATABASE"
-}
-
 function delete_non_movie_files
 {
 	echo "Files to be deleted: "
@@ -566,8 +525,6 @@ function refresh_db
 	list_files
 	db_add_new_files
 	remove_non_existent_files
-	update_actor_name
-	update_rating_from_filename
 	list_actors
 }
 
