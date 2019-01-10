@@ -184,6 +184,8 @@ function play_random_actor
 		
 		# play the actor
 		echo "Selected actor is: $actor"
+		echo "Total number of movies:" `grep "$actor" "$DATABASE" | wc -l`
+		echo "Number of movies played:" `grep "$actor" "$DATABASE" | awk -F, 'BEGIN{ sum=0 } { if( 0 < $3 ) sum++ } END{ print sum }'`
 		read -p "Press 0 to play, 1 to try a new actor or 9 to goto main menu: "
 		case $REPLY in
 		0)
@@ -732,7 +734,6 @@ function sync_db
 		
 		[ "0" != "${split:0:1}" ] && db_update "$title" "split=${split:0:1}"
     done < "$REPLY"
-    
 }
 
 function show_stats {
