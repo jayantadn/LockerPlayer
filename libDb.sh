@@ -20,21 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# global variables
 movie_ext_arr=("m4v" "f4v" "mp4" "MP4" "mkv" "avi" "wmv" "flv" "mov" "mpg" "mpeg" "264")
-
-# param = (opt) file path
-function db_touch 
-{
-	if [ $# -eq 0 ]
-	then
-		echo "index,rating,playcount,actor,category,title,rel_path,delete,split" > "$DATABASE"
-	elif [ $# -eq 1 ]
-	then
-		echo "index,rating,playcount,actor,category,title,rel_path,delete,split" > "$1"
-	else
-		echo "**ERROR** Invalid number of parameters to $FUNCNAME"
-	fi
-}
 
 # param = title, rel_path
 function db_add 
@@ -47,7 +34,7 @@ function db_add
 		ext=`echo $1 | rev | cut -d"." -f1 | rev`
 		for var in ${movie_ext_arr[*]}
 		do
-			if [ $var == $ext ]
+			if [ "$var" == "$ext" ]
 			then
 				echo "Adding to database: $2"
 				let max_id++
@@ -89,7 +76,113 @@ function db_add_new_files
 	fi
 }
 
-function db_update # parameters are title, field=value, (opt)filepath
+# param = title, field
+function db_get 
+{
+	if [ $# -ne 2 ]
+	then
+		return
+	fi
+	
+	read firstline < "$DATABASE"
+	fieldnum=`echo $firstline | awk -v awk_field=$2 -F, '{ for(i=1; i<=NF; i++) if( $i == awk_field ) print i }'`
+	
+	awk -v awk_title="$1" -v awk_fieldnum=$fieldnum -F, '{
+		if( $6 == awk_title ) print $awk_fieldnum;
+	}' "$DATABASE"
+}
+
+# param = rel_path
+function db_remove 
+{
+	echo "Removing from database: $1"
+	
+	awk -v awk_rel="$1" -F, '{ if( $7 != awk_rel ) print $0 }' "$DATABASE" > "$TEMP_DIR/db_remove.csv"
+	
+	mv -f "$TEMP_DIR/db_remove.csv" "$DATABASE"
+}
+
+# param = external database path
+function db_sync {
+	echo "Syncing from external database"
+	
+	# initialize the temp db
+	db_touch "$TEMP_DIR/db_sync"
+	
+	while read line
+	do
+		title=`echo $line | cut -d"," -f6`
+		[ "$title" == "title" ] && continue # skip the first line
+
+		ext_line=`grep "$title" "$1"`
+		if [ "$ext_line" == "" ]
+		then
+			# movie not found in external database
+			echo $line >> "$TEMP_DIR/db_sync"
+			continue 
+		fi
+		
+		echo "Updating $title"
+		
+		# get the stats
+		old_rating=`echo 	$line | cut -d"," -f2`
+		old_playcount=`echo $line | cut -d"," -f3`
+		old_actor=`echo 	$line | cut -d"," -f4`
+		old_category=`echo 	$line | cut -d"," -f5`
+		old_delete=`echo 	$line | cut -d"," -f8`
+		old_split=`echo 	$line | cut -d"," -f9`
+		
+		new_rating=`echo 	$ext_line | cut -d"," -f2`
+		new_playcount=`echo $ext_line | cut -d"," -f3`
+		new_actor=`echo 	$ext_line | cut -d"," -f4`
+		new_category=`echo 	$ext_line | cut -d"," -f5`
+		new_delete=`echo 	$ext_line | cut -d"," -f8`
+		new_split=`echo 	$ext_line | cut -d"," -f9`
+		
+		# updating index
+		let index++
+		newline="$index"
+		
+		# rating
+		[ $new_rating -gt 0 ] && newline="$newline,$new_rating" || newline="$newline,$old_rating"
+		
+		# update playcount
+		let playcount=$new_playcount+$old_playcount
+		newline="$newline,$playcount"
+
+		# actor and category
+		[ "$new_actor" != "Unknown" ] && newline="$newline,$new_actor" || newline="$newline,$old_actor"
+		[ "$new_category" != "Straight" ] && newline="$newline,$new_category" || newline="$newline,$old_category"
+		
+		# title and path
+		rel_path=`echo 	$line | cut -d"," -f7`
+		newline="$newline,$title,$rel_path"
+		
+		# delete and split
+		[ $new_delete -gt 0 ] && newline="$newline,$new_delete" || newline="$newline,$old_delete"
+		[ $new_split -gt 0 ] && newline="$newline,$new_split" || newline="$newline,$old_split"
+		
+		echo $newline >> "$TEMP_DIR/db_sync"
+		
+	done < "$DATABASE"
+}
+
+# param = (opt) file path
+function db_touch 
+{
+	if [ $# -eq 0 ]
+	then
+		echo "index,rating,playcount,actor,category,title,rel_path,delete,split" > "$DATABASE"
+	elif [ $# -eq 1 ]
+	then
+		echo "index,rating,playcount,actor,category,title,rel_path,delete,split" > "$1"
+	else
+		echo "**ERROR** Invalid number of parameters to $FUNCNAME"
+	fi
+}
+
+# parameters are title, field=value, (opt)filepath
+function db_update 
 {
 	if [ $# -eq 2 ]
 	then
@@ -130,27 +223,5 @@ function db_update # parameters are title, field=value, (opt)filepath
 	mv -f "$TEMP_DIR/db_update.csv" "$dest"
 }
 
-function db_get # param = title, field
-{
-	if [ $# -ne 2 ]
-	then
-		return
-	fi
-	
-	read firstline < "$DATABASE"
-	fieldnum=`echo $firstline | awk -v awk_field=$2 -F, '{ for(i=1; i<=NF; i++) if( $i == awk_field ) print i }'`
-	
-	awk -v awk_title="$1" -v awk_fieldnum=$fieldnum -F, '{
-		if( $6 == awk_title ) print $awk_fieldnum;
-	}' "$DATABASE"
-}
 
-function db_remove # param = rel_path
-{
-	echo "Removing from database: $1"
-	
-	awk -v awk_rel="$1" -F, '{ if( $7 != awk_rel ) print $0 }' "$DATABASE" > "$TEMP_DIR/db_remove.csv"
-	
-	mv -f "$TEMP_DIR/db_remove.csv" "$DATABASE"
-}
 

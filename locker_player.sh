@@ -652,47 +652,6 @@ function backup_movies
 	# awk -F, '{ if($2 ~ /[1-9]/) print $6 }' $DATABASE
 }
 
-function sync_db
-{
-    read -p "Enter location where to copy from: "
-    [ -f "$REPLY" ] || { echo "**ERROR** Invalid file"; return; }
-    
-	echo "Syncing database"
-	while read line
-	do
-        title=`echo "$line" | awk -F, '{ print $6 }'`
-        rating=`echo "$line" | awk -F, '{ print $2 }'`
-        playcount=`echo "$line" | awk -F, '{ print $3 }'`
-        actor=`echo "$line" | awk -F, '{ print $4 }'`
-        category=`echo "$line" | awk -F, '{ print $5 }'`
-        delete=`echo "$line" | awk -F, '{ print $8 }'`
-		split=`echo "$line" | awk -F, '{ print $9 }'`
-        
-        [ "$title" == "title" ] && continue # skip the first line
-		
-		# check if the movie exist in database. else skip
-		grep "$title" "$DATABASE" > /dev/null
-		[ $? -ne 0 ] && continue
-        
-        cur_rating=`db_get "$title" "rating"`
-        [ "$cur_rating" != "$rating" ] && db_update "$title" "rating=$rating"
-        
-        cur_playcount=`db_get "$title" "playcount"`
-        let cur_playcount=$cur_playcount+$playcount
-        [ "$cur_playcount" != "$playcount" ] && db_update "$title" "playcount=$cur_playcount"
-        
-        cur_actor=`db_get "$title" "actor"`
-        [ "$cur_actor" != "$actor" ] && db_update "$title" "actor=$actor"
-        
-        cur_category=`db_get "$title" "category"`
-        [ "$cur_category" != "$category" ] && db_update "$title" "category=$category"
-        
-        [ "0" != "$delete" ] && db_update "$title" "delete=$delete"
-		
-		[ "0" != "${split:0:1}" ] && db_update "$title" "split=${split:0:1}"
-    done < "$REPLY"
-}
-
 function show_stats {
 	echo
 	echo "Total number of movies: " `wc -l "$DATABASE" | cut -d' ' -f1`
@@ -730,7 +689,9 @@ function menu_other
 			;;
 			
 		"Sync database from external media")
-            sync_db
+			read -p "Enter location where to copy from: "
+			[ -f "$REPLY" ] || { echo "**ERROR** Invalid file. Check if path is Unix style. Sometimes, you simply need to try again."; return; }
+			db_sync "$REPLY"            
 			break
 			;;
 			
