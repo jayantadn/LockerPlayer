@@ -524,6 +524,7 @@ function refresh_db
 {
 	list_files
 	db_add_new_files
+	update_actor_name
 	remove_non_existent_files
 	list_actors
 }
@@ -586,6 +587,33 @@ function split_movies
 		fi
 	done < "$DATABASE"
 	
+}
+
+function update_actor_name
+{
+	echo "Determining actor name from file path"
+	
+	while read line 
+	do
+		flg=false
+		
+		echo $line | grep "Videobox" > /dev/null
+		[ $? -eq 0 ] && flg=true
+		
+		echo $line | grep "Naughty America" > /dev/null
+		[ $? -eq 0 ] && flg=true
+		
+		echo $line | grep "2018_begin" > /dev/null
+		[ $? -eq 0 ] && flg=true
+
+		if [ $flg == true ]
+		then
+			cur_actor=`echo "$line" | awk -F, '{print $4}'`
+			actor=`echo "$line" | awk -F, '{ split($7, arr, "/"); print arr[2]; }'`
+			title=`echo "$line" | awk -F, '{print $6}'`
+			[ "$cur_actor" == "Unknown" ] && db_update "$title" "actor=$actor"
+		fi
+	done < "$DATABASE"
 }
 
 function rename_duplicate_movies
