@@ -107,64 +107,60 @@ function db_sync {
 	echo "Syncing from external database"
 	
 	# initialize the temp db
-	db_touch "$TEMP_DIR/db_sync"
+	db_touch "$TEMP_DIR/db_sync.csv"
 	
 	while read line
 	do
-		title=`echo $line | cut -d"," -f6`
+		title=`echo "$line" | cut -d"," -f6`
+		ext_line=`grep "$title" "$1"`
+		
 		[ "$title" == "title" ] && continue # skip the first line
 
-		ext_line=`grep "$title" "$1"`
-		if [ "$ext_line" == "" ]
-		then
-			# movie not found in external database
-			echo $line >> "$TEMP_DIR/db_sync"
-			continue 
-		fi
-		
-		echo "Updating $title"
-		
 		# get the stats
-		old_rating=`echo 	$line | cut -d"," -f2`
-		old_playcount=`echo $line | cut -d"," -f3`
-		old_actor=`echo 	$line | cut -d"," -f4`
-		old_category=`echo 	$line | cut -d"," -f5`
-		old_delete=`echo 	$line | cut -d"," -f8`
-		old_split=`echo 	$line | cut -d"," -f9`
+		old_rating=`echo 	"$line" | cut -d"," -f2`
+		old_playcount=`echo "$line" | cut -d"," -f3`
+		old_actor=`echo 	"$line" | cut -d"," -f4`
+		old_category=`echo 	"$line" | cut -d"," -f5`
+		old_delete=`echo 	"$line" | cut -d"," -f8`
+		old_split=`echo 	"$line" | cut -d"," -f9`
+		rel_path=`echo 		"$line" | cut -d"," -f7`		
 		
-		new_rating=`echo 	$ext_line | cut -d"," -f2`
-		new_playcount=`echo $ext_line | cut -d"," -f3`
-		new_actor=`echo 	$ext_line | cut -d"," -f4`
-		new_category=`echo 	$ext_line | cut -d"," -f5`
-		new_delete=`echo 	$ext_line | cut -d"," -f8`
-		new_split=`echo 	$ext_line | cut -d"," -f9`
+		new_rating=`echo 	"$ext_line" | cut -d"," -f2`
+		new_playcount=`echo "$ext_line" | cut -d"," -f3`
+		new_actor=`echo 	"$ext_line" | cut -d"," -f4`
+		new_category=`echo 	"$ext_line" | cut -d"," -f5`
+		new_delete=`echo 	"$ext_line" | cut -d"," -f8`
+		new_split=`echo 	"$ext_line" | cut -d"," -f9`
 		
 		# updating index
 		let index++
 		newline="$index"
 		
-		# rating
-		[ $new_rating -gt 0 ] && newline="$newline,$new_rating" || newline="$newline,$old_rating"
-		
-		# update playcount
-		let playcount=$new_playcount+$old_playcount
-		newline="$newline,$playcount"
+		if [ "$ext_line" == "" ]
+		then
+			newline="$newline","$old_rating","$old_playcount","$old_actor","$old_category","$title","$rel_path","$old_delete","$old_split"
+		else
+			echo "Updating $title"
+			
+			[ $new_rating -gt 0 ] && newline="$newline","$new_rating" || newline="$newline","$old_rating"
+			
+			let playcount=$new_playcount+$old_playcount
+			newline="$newline","$playcount"
 
-		# actor and category
-		[ "$new_actor" != "Unknown" ] && newline="$newline,$new_actor" || newline="$newline,$old_actor"
-		[ "$new_category" != "Straight" ] && newline="$newline,$new_category" || newline="$newline,$old_category"
+			[ "$new_actor" != "Unknown" ] && newline="$newline","$new_actor" || newline="$newline","$old_actor"
+			[ "$new_category" != "Straight" ] && newline="$newline","$new_category" || newline="$newline","$old_category"
+			
+			newline="$newline","$title","$rel_path"
+			
+			[ $new_delete -gt 0 ] && newline="$newline","$new_delete" || newline="$newline","$old_delete"
+			[ $new_split -gt 0 ] && newline="$newline","$new_split" || newline="$newline","$old_split"
+		fi
 		
-		# title and path
-		rel_path=`echo 	$line | cut -d"," -f7`
-		newline="$newline,$title,$rel_path"
-		
-		# delete and split
-		[ $new_delete -gt 0 ] && newline="$newline,$new_delete" || newline="$newline,$old_delete"
-		[ $new_split -gt 0 ] && newline="$newline,$new_split" || newline="$newline,$old_split"
-		
-		echo $newline >> "$TEMP_DIR/db_sync"
+		echo "$newline" >> "$TEMP_DIR/db_sync.csv"
 		
 	done < "$DATABASE"
+	
+	mv -f "$TEMP_DIR/db_sync.csv" "$DATABASE"
 }
 
 # param = (opt) file path
