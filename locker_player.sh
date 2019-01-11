@@ -139,7 +139,7 @@ function play_random_file
 			BEGIN{FS=","} 
 			
 			$1 == awk_play_id {
-				printf "\n\nThe following file will be played: \n Actor = %s \n Title = %s \n Category = %s \n Rating = %s \n\n ", $4, $6, $5, $2;
+				printf "\n\nThe following file will be played: \n Actor = %s \n Title = %s \n Category = %s \n Rating = %s \n Playcount = %s \n\n ", $4, $6, $5, $2, $3;
 			}
 		' "$db"
 
@@ -288,7 +288,7 @@ function get_config
 		echo "SPLITTER=avidemux2.6_qt4" >> "$CONFIG_FILE"
 	fi
 	
-	# Reading configuration file
+	# Validating configuration file
 	while read line
 	do
 		key=`echo $line | awk 'BEGIN{FS="="} {print $1}'`
@@ -312,19 +312,19 @@ function get_config
 			;;
 			
 		"PLAYER")
-			which "$value" > /dev/null
+			which "$value" 2> /dev/null 1>&2
 			if [ $? -ne 0 ]
 			then
-				echo "**WARNING** Configured Movie Player is not installed"
+				[ -f "$value" ] || echo "**WARNING** Configured Movie Player is not installed"
 			fi
 			readonly PLAYER="$value"
 			;;
 			
 		"SPLITTER")
-			which "$value" > /dev/null
+			which "$value" 2> /dev/null 1>&2
 			if [ $? -ne 0 ]
 			then
-				echo "**WARNING** Configured splitter is not installed"
+				[ -f "$value" ] || echo "**WARNING** Configured splitter is not installed"
 			else
 				readonly SPLITTER="$value"
 			fi
@@ -762,7 +762,12 @@ function menu_other
 			
 		"Sync database from external media")
 			read -p "Enter location where to copy from: "
-			[ -f "$REPLY" ] || { echo "**ERROR** Invalid file. Check if path is Unix style. Sometimes, you simply need to try again."; return; }
+			if ! [ -f "$REPLY" ]
+			then 
+				sleep 2
+				[ -f "$REPLY" ] || { echo "**ERROR** Invalid file. Check if path is Unix style. Sometimes, you simply need to try again."; return; }
+			fi
+			
 			db_sync "$REPLY"            
 			break
 			;;
@@ -778,16 +783,14 @@ function main
 {
 	# get the configuration parameters
 	get_config
-	echo "The following configuration is found:"
-	echo -e "\tMOVIE_DIR=$MOVIE_DIR"
-	echo -e "\tPLAYER=$PLAYER"
-	echo -e "\tSPLITTER=$SPLITTER"
 
 	# create backup of database
 	if [ -f "$DATABASE" ]
 	then
 		bakdb=`date +%D | awk -F/ '{ printf "database_20%s%s%s.csv", $3, $1, $2 }'`
 		dir=`dirname "$DATABASE"`
+		dir="$dir"/_archive
+		[ -e "$dir" ] || mkdir -p "$dir"
 		cp -f "$DATABASE" "$dir/$bakdb"
 	else
 		read -p "Database file missing. Do you want to create a new one? (y/n) "

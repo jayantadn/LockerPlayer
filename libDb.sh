@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# global variables
 movie_ext_arr=("m4v" "f4v" "mp4" "MP4" "mkv" "avi" "wmv" "flv" "mov" "mpg" "mpeg" "264")
 
 # param = title, rel_path
