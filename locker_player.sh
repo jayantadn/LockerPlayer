@@ -56,8 +56,10 @@ function menu_postplay	# parameter is file path
 		"Play another movie" \
 		"Rate the movie" \
 		"Delete the movie" \
+		"Mark movie for split" \
 		"Change other attributes" \
-		"Go to main menu"
+		"Show movie path" \
+		"Go back"
 	do
 		case "$item" in
 			"Play another movie")
@@ -92,7 +94,7 @@ function menu_postplay	# parameter is file path
 				# no break
 				;;
 				
-			"Go to main menu")
+			"Go back")
 				break
 				;;
 		esac
@@ -142,7 +144,7 @@ function play_random_file
 		' "$db"
 
 		# ask whether to play and launch the player
-		read -p "Press 0 to play, 1 to try a new file or 9 to goto main menu: "
+		read -p "Press 0 to play, 1 to try a new file or 9 to go back: "
 		case $REPLY in
 		0)
 			"$PLAYER" "$file"
@@ -168,6 +170,7 @@ function play_random_file
 	done
 }
 
+# param actor (optional)
 function play_random_actor
 {
 	if ! [ -f "$CONFIG_DIR/list_actor" ]
@@ -177,16 +180,21 @@ function play_random_actor
 
 	while true
 	do
-		# select a random actor
-		num_actors=`wc -l "$CONFIG_DIR/list_actor" | cut -d' ' -f1`
-		let play_actor=$RANDOM%$num_actors+1
-		actor=`sed -n ${play_actor}p "$CONFIG_DIR/list_actor"`
+		if [ $# -eq 0 ]
+		then
+			# select a random actor
+			num_actors=`wc -l "$CONFIG_DIR/list_actor" | cut -d' ' -f1`
+			let play_actor=$RANDOM%$num_actors+1
+			actor=`sed -n ${play_actor}p "$CONFIG_DIR/list_actor"`
+		else
+			actor="$1"
+		fi
 		
 		# play the actor
 		echo "Selected actor is: $actor"
 		echo "Total number of movies:" `grep "$actor" "$DATABASE" | wc -l`
 		echo "Number of movies played:" `grep "$actor" "$DATABASE" | awk -F, 'BEGIN{ sum=0 } { if( 0 < $3 ) sum++ } END{ print sum }'`
-		read -p "Press 0 to play, 1 to try a new actor or 9 to goto main menu: "
+		read -p "Press 0 to play, 1 to try again or 9 to go back: "
 		case $REPLY in
 		0)
 			db_touch "$TEMP_DIR/db_actor.csv"
@@ -227,6 +235,29 @@ function play_something_else
 	done
 }
 
+function play_specific_actor {
+	while read line
+	do
+		arr_actors[i]=`echo "$line" | sed 's/ /_/g'`
+		let i++;
+	done < "$CONFIG_DIR/list_actor"
+	
+	arr_actors[i]="...Back"
+	
+	PS3="[Select Actor] Enter your choice: "
+	select actor in ${arr_actors[*]}
+	do
+		# reset array
+		i=0; 
+		arr_actors=()
+		
+		[ "$actor" == "...Back" ] && return
+		
+		play_random_actor "`echo "$actor" | sed 's/_/ /g'`"
+		
+		break
+	done
+}
 
 # This function will do the following:
 #	- create .locker_config under home directory
@@ -693,6 +724,8 @@ function menu_other
 	echo
 	PS3="[Main Menu] Enter your choice: "
 	select item in \
+		"Refresh database" \
+		"Fix movie folder" \
 		"Show statistics" \
 		"Copy files to external media" \
 		"Backup high rated movies" \
@@ -700,7 +733,18 @@ function menu_other
 		"Go back to main menu" 
 	do
 		case $item in
-			"Show statistics")
+		
+		"Refresh database")
+			refresh_db
+			break
+			;;
+					
+		"Fix movie folder")
+			fix_movie_folder
+			break
+			;;
+
+		"Show statistics")
 			show_stats
 			break
 			;;	
@@ -745,6 +789,9 @@ function main
 		bakdb=`date +%D | awk -F/ '{ printf "database_20%s%s%s.csv", $3, $1, $2 }'`
 		dir=`dirname "$DATABASE"`
 		cp -f "$DATABASE" "$dir/$bakdb"
+	else
+		read -p "Database file missing. Do you want to create a new one? (y/n) "
+		[ "$REPLY" == "y" ] && refresh_db || exit
 	fi
 	
 	while true
@@ -755,49 +802,38 @@ function main
 			"Play a random file" \
 			"Play a high rated movie" \
 			"Play a random actor" \
+			"Play specific actor" \
 			"Play something else" \
-			"Refresh database" \
-			"Fix movie folder" \
 			"Other options" \
 			"Exit" 
 		do
 			case $item in
 				"Play a random file")
-					[ -f "$DATABASE" ] || { echo "**ERROR** Database file does not exist"; continue; }
 					play_random_file
 					break
 					;;
 					
 				"Play a high rated movie")
-					[ -f "$DATABASE" ] || { echo "**ERROR** Database file does not exist"; continue; }
 					play_random_file "rating"
 					break
 					;;
 
 				"Play a random actor")
-					[ -f "$DATABASE" ] || { echo "**ERROR** Database file does not exist"; continue; }
 					play_random_actor
 					break
 					;;
 
+				"Play specific actor")
+					play_specific_actor
+					break
+					;;
+
 				"Play something else")
-					[ -f "$DATABASE" ] || { echo "**ERROR** Database file does not exist"; continue; }
 					play_something_else
 					break
 					;;
 
-				"Fix movie folder")
-					fix_movie_folder
-					break
-					;;
-				
-				"Refresh database")
-					refresh_db
-					break
-					;;
-					
 				"Other options")
-					[ -f "$DATABASE" ] || { echo "**ERROR** Database file does not exist"; continue; }
 					menu_other
 					break
 					;;
