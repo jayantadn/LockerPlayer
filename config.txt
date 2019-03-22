@@ -1,0 +1,3 @@
+MOVIEDIR=X:\.Locker
+PLAYER=T:\ProgramFiles\GOMPlayer\GOM.exe 
+SPLITTER=T:\ProgramFiles\AvidemuxPortable\AvidemuxPortable.exe  
