@@ -91,8 +91,11 @@ def getConfig():
 
    
 def playFile():
-    id = random.randrange( 0, len(db.arrData), 1 )
-    os.system( CONFIG["PLAYER"] + " " + db.arrData[id]["path"] )
+    if not len(db.arrData) == 0:
+        id = random.randrange( 0, len(db.arrData), 1 )
+        os.system( CONFIG["PLAYER"] + " " + db.arrData[id]["path"] )
+    else:
+        input( "[ERROR] No movies found. Press <enter> to continue..." )
    
 def refreshDB():
     arrFilenameErrors = []
