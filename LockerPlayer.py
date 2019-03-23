@@ -40,8 +40,6 @@ CONFIGFILE = os.path.join( CURDIR, "config.txt" )
 CONFIG = dict()
 
 # global variables
-arrDB = []
-      
 db = DB()
 
 # all function definitions
@@ -93,26 +91,26 @@ def getConfig():
 
    
 def playFile():
-    id = random.randrange( 0, len(arrDB), 1 )
-    os.system( CONFIG["PLAYER"] + " " + arrDB[id]["path"] )
+    id = random.randrange( 0, len(db.arrData), 1 )
+    os.system( CONFIG["PLAYER"] + " " + db.arrData[id]["path"] )
    
 def refreshDB():
     arrFilenameErrors = []
     arrDirnameErrors = []
     for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
         for file in files:
+            # creating the full path
+            path = os.path.join(root, file)
+            
             # check if filename is valid
             try:
-                print( "Adding to database: ", os.path.join(root, file) )
+                print( "Adding to database: ", path )
             except UnicodeEncodeError:
                 arrFilenameErrors.append( root )
             
             # adding file to database
-            entry = {
-                "title": file,
-                "path": os.path.join(  root, file )
-            }
-            arrDB.append( entry )
+            if not db.exists(path):
+                db.add(path)
             
     # display the filename and dirname errors
     if not len(arrFilenameErrors) == 0:
@@ -132,11 +130,6 @@ def refreshDB():
             print( "Filenames are assumed fixed. Refreshing database again" )
             refreshDB()
             
-    # dump to json file
-    fo = open( "database.json", "w" )
-    fo.write( json.dumps( arrDB, indent=4 ) )
-    fo.close()
-    
 def showmenuMain():
     menuMain = ConsoleMenu("Main menu")
     itemPlayFile = FunctionItem("Play a random file", playFile)
@@ -152,11 +145,9 @@ def showmenuMain():
 
 
 def main():
-    #getConfig()
-    #showmenuMain()
-    #cleanup()
-    print( db.exists( "X:\.Locker\Videobox\Brittney Skye\Snow Job part3.mkv" ) )
-    #print( db.arrData )
+    getConfig()
+    showmenuMain()
+    cleanup()
     
 # invoke the main
 main()

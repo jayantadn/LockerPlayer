@@ -52,15 +52,13 @@ class DB:
     def add(self, path):
         print( "Adding to database: ", path )
         entry = {
-            "title": os.path.basename(path),
+            "path": path,
             "timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
             "isValid": True,
-            "path": path,
             "rating": None,
             "playcount": 0,
             "actor": None,
             "category": "Straight",
-            "delete": False,
             "split": False,
             "note": None
         }
