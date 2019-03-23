@@ -19,11 +19,9 @@ def cleanup():
     shutil.rmtree( TMPDIR )
         
 def getConfig():
-    print( "Reading configuration file and doing initial setup" )
-    
     # check if config file exist, else exit
     if not os.path.exists( CONFIGFILE ):
-        print( "ERROR: config file does not exist" )
+        print( "[ERROR] config file does not exist" )
         quit()
         
     # open the config file and read all parameters
@@ -38,7 +36,7 @@ def getConfig():
 
     # check if all the configuration exist
     if not "MOVIEDIR" in CONFIG or not "PLAYER" in CONFIG or not "SPLITTER" in CONFIG:
-        print( "ERROR: Invalid configuration" )
+        print( "[ERROR] Invalid configuration" )
         quit()        
 
     # strip the newline character from each parameter
@@ -47,13 +45,13 @@ def getConfig():
 
     # validate the configuration
     if not os.path.isdir( os.path.normpath(CONFIG["MOVIEDIR"]) ):
-        print( "ERROR: Configured movie directory does not exist" )
+        print( "[ERROR] Configured movie directory does not exist" )
         quit()
     if not os.path.isfile(CONFIG["PLAYER"]):
-        print( "ERROR: Configured movie player does not exist" )
+        print( "[ERROR] Configured movie player does not exist" )
         quit()
     if not os.path.isfile(CONFIG["SPLITTER"]):
-        print( "WARNING: Configured movie splitter does not exist" )
+        print( "[WARNING] Configured movie splitter does not exist" )
 
     # create tmp folder
     if os.path.exists( TMPDIR ): 
@@ -67,24 +65,38 @@ def playFile():
     print( "Play some file" )
    
 def refreshDB():
-    print( "Reading movie directory and refreshing database" )
-    
+    arrFilenameErrors = []
     for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
         for file in files:
+            # check if filename is valid
+            try:
+                print( "Adding to database: ", file )
+            except UnicodeEncodeError:
+                arrFilenameErrors.append( root )
+            
+            # adding file to database
             entry = {
                 "title": file,
                 "path": os.path.join(  root, file )
             }
             arrDB.append( entry )
-
-    print( arrDB[1] )
+            
+    # display the filename errors
+    if not len(arrFilenameErrors) == 0:
+        print( "[WARNING] Improper filename was found under the following folders:" )
+        for pardir in arrFilenameErrors:
+            print( pardir )
+        fix = input( "Please fix the filenames manually. [F]ixed, [S]kip " )
+        if fix in ('F', 'f'):
+            print( "Filenames are assumed fixed. Refreshing database again" )
+            refreshDB()
     
 def showmenuMain():
     menuMain = ConsoleMenu("Main menu")
     itemPlayFile = FunctionItem("Play a random file", playFile)
     menuMain.append_item( itemPlayFile )
     
-    menuOther = ConsoleMenu("Main menu cntd...")
+    menuOther = ConsoleMenu("Other options")
     itemRefreshDB = FunctionItem("Refresh database", refreshDB)
     menuOther.append_item( itemRefreshDB )
     
