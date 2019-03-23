@@ -1,11 +1,37 @@
-# imports
+# MIT License
+
+# Copyright (c) 2019 Jayanta Debnath
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# import external modules
 import sys  
 import os   
 import shutil
 import time
 import random
+import json
 from consolemenu import *
 from consolemenu.items import *
+
+# import internal modules
+from db import DB
 
 # constants
 CURDIR = os.path.dirname( sys.argv[0] )
@@ -15,6 +41,8 @@ CONFIG = dict()
 
 # global variables
 arrDB = []
+      
+db = DB()
 
 # all function definitions
 
@@ -103,6 +131,11 @@ def refreshDB():
         if fix in ('F', 'f'):
             print( "Filenames are assumed fixed. Refreshing database again" )
             refreshDB()
+            
+    # dump to json file
+    fo = open( "database.json", "w" )
+    fo.write( json.dumps( arrDB, indent=4 ) )
+    fo.close()
     
 def showmenuMain():
     menuMain = ConsoleMenu("Main menu")
