@@ -1,8 +1,9 @@
 # imports
-import sys  # for arguments
-import os   # for path resolving and manipulation
-import shutil # rmtree
+import sys  
+import os   
+import shutil
 import time
+import random
 from consolemenu import *
 from consolemenu.items import *
 
@@ -14,6 +15,8 @@ CONFIG = dict()
 
 # global variables
 arrDB = []
+
+# all function definitions
 
 def cleanup():
     shutil.rmtree( TMPDIR )
@@ -62,7 +65,8 @@ def getConfig():
 
    
 def playFile():
-    print( "Play some file" )
+    id = random.randrange( 0, len(arrDB), 1 )
+    os.system( CONFIG["PLAYER"] + " " + arrDB[id]["path"] )
    
 def refreshDB():
     arrFilenameErrors = []
@@ -70,7 +74,7 @@ def refreshDB():
         for file in files:
             # check if filename is valid
             try:
-                print( "Adding to database: ", file )
+                print( "Adding to database: ", os.path.join(root, file) )
             except UnicodeEncodeError:
                 arrFilenameErrors.append( root )
             
