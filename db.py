@@ -75,3 +75,19 @@ class DB:
                 self.arrData[idx]["isValid"] = False
                 self.save()
                 break
+            
+    def update(self, path, key, val):
+        for idx, data in enumerate(self.arrData):
+            if data["path"] == path:
+                print( "Updating ", key, "to ", val, "for ", path )
+                self.arrData[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+                self.arrData[idx][key] = val
+                self.save()
+                break
+            
+    def exists(self, path):
+        flgExist = False
+        for data in self.arrData:
+            if data["path"] == path:
+                flgExist = True
+        return flgExist

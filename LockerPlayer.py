@@ -155,7 +155,7 @@ def main():
     #getConfig()
     #showmenuMain()
     #cleanup()
-    db.remove( "X:\.Locker\Videobox\Brittney Skye\Snow Job part3.mkv" )
+    print( db.exists( "X:\.Locker\Videobox\Brittney Skye\Snow Job part3.mkv" ) )
     #print( db.arrData )
     
 # invoke the main
