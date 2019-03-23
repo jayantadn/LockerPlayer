@@ -1,7 +1,10 @@
 # imports
 import sys  # for arguments
 import os   # for path resolving and manipulation
-import shutil
+import shutil # rmtree
+import time
+from consolemenu import *
+from consolemenu.items import *
 
 # constants
 CURDIR = os.path.dirname( sys.argv[0] )
@@ -40,10 +43,32 @@ def getConfig():
 
     # create tmp folder
     if os.path.exists( TMPDIR ): shutil.rmtree( TMPDIR )
+    while( os.path.exists( TMPDIR ) ): time.sleep( 0.01 )
     os.mkdir( TMPDIR )
 
 def main():
     getConfig()
+    showmenuMain()
     cleanup()
+   
+def playFile():
+    print( "Play some file" )
+   
+def refreshDB():
+    print( "refresh DB" )
     
+def showmenuMain():
+    menuMain = ConsoleMenu("Main menu")
+    itemPlayFile = FunctionItem("Play a random file", playFile)
+    menuMain.append_item( itemPlayFile )
+    
+    menuOther = ConsoleMenu("Main menu cntd...")
+    itemRefreshDB = FunctionItem("Refresh database", refreshDB)
+    menuOther.append_item( itemRefreshDB )
+    
+    itemOther = SubmenuItem("Other options", menuOther, menuMain)
+    menuMain.append_item( itemOther )
+    menuMain.show()
+    
+# invoke the main
 main()
