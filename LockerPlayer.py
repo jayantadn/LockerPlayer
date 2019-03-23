@@ -70,6 +70,7 @@ def playFile():
    
 def refreshDB():
     arrFilenameErrors = []
+    arrDirnameErrors = []
     for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
         for file in files:
             # check if filename is valid
@@ -85,11 +86,19 @@ def refreshDB():
             }
             arrDB.append( entry )
             
-    # display the filename errors
+    # display the filename and dirname errors
     if not len(arrFilenameErrors) == 0:
-        print( "[WARNING] Improper filename was found under the following folders:" )
+        print( "[WARNING] Invalid file or folder name found under:" )
         for pardir in arrFilenameErrors:
-            print( pardir )
+            try:
+                print( pardir )
+            except UnicodeEncodeError:
+                arrDirnameErrors.append( pardir )
+        for pardir in arrDirnameErrors:
+            try:
+                print( os.path.dirname(pardir) )
+            except UnicodeEncodeError:
+                print( "[WARNING] Invalid names found in some unidentified folders" )
         fix = input( "Please fix the filenames manually. [F]ixed, [S]kip " )
         if fix in ('F', 'f'):
             print( "Filenames are assumed fixed. Refreshing database again" )
