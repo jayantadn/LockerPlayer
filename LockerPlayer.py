@@ -36,7 +36,11 @@ def getConfig():
         print( "ERROR: Configured movie player does not exist" )
         exit
     if not os.path.isfile(CONFIG["SPLITTER"][:-1]):
-        print( "WARNING: Configured movie splitter does not exist" )    
+        print( "WARNING: Configured movie splitter does not exist" )
+
+    # create tmp folder
+    if os.path.exists( TMPDIR ): shutil.rmtree( TMPDIR )
+    os.mkdir( TMPDIR )
 
 def main():
     getConfig()
