@@ -1,6 +1,7 @@
 # imports
-import sys
-import os
+import sys  # for arguments
+import os   # for path resolving and manipulation
+import shutil
 
 # constants
 CURDIR = os.path.dirname( sys.argv[0] )
@@ -9,8 +10,8 @@ CONFIGFILE = os.path.join( CURDIR, "config.txt" )
 CONFIG = dict()
 
 def cleanup():
-    os.rmdir( TMPDIR )
-
+    shutil.rmtree( TMPDIR )
+        
 def getConfig():
     # check if config file exist, else exit
     if not os.path.exists( CONFIGFILE ):
