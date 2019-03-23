@@ -50,6 +50,7 @@ class DB:
         fo.close()
         
     def add(self, path):
+        print( "Adding to database: ", path )
         entry = {
             "title": os.path.basename(path),
             "timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
@@ -65,3 +66,12 @@ class DB:
         }
         self.arrData.append( entry )
         self.save()
+        
+    def remove(self, path):
+        for idx, data in enumerate(self.arrData):
+            if data["path"] == path:
+                print( "Removing from database: ", path )
+                self.arrData[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+                self.arrData[idx]["isValid"] = False
+                self.save()
+                break
