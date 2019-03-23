@@ -20,7 +20,48 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# imports
+import os
+import sys
+import json
+from datetime import datetime
+
+# constants
+CURDIR = os.path.dirname( sys.argv[0] )
+DBDIR = os.path.join( CURDIR, "database.json" )
+
 class DB:
-    def __init__(this):
-        print( "constructor" )
+    # contructor
+    def __init__(self):
+        self.arrData = []
+        if not os.path.exists( DBDIR ):
+            fo = open( DBDIR, "w" )
+            fo.close()
+        else:
+            fo = open( DBDIR, "r" )
+            contents = fo.read()
+            if not len(contents) == 0:
+                self.arrData = json.loads( contents )
+            fo.close()
         
+    def save(self):
+        fo = open( DBDIR, "w" )
+        fo.write( json.dumps( self.arrData, indent=4 ) )
+        fo.close()
+        
+    def add(self, path):
+        entry = {
+            "title": os.path.basename(path),
+            "timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
+            "isValid": True,
+            "path": path,
+            "rating": None,
+            "playcount": 0,
+            "actor": None,
+            "category": "Straight",
+            "delete": False,
+            "split": False,
+            "note": None
+        }
+        self.arrData.append( entry )
+        self.save()

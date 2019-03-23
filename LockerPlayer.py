@@ -152,9 +152,11 @@ def showmenuMain():
 
 
 def main():
-    getConfig()
-    showmenuMain()
-    cleanup()
+    #getConfig()
+    #showmenuMain()
+    #cleanup()
+    #db.add( "X:\.Locker\2018\Jessa Rhodes\BangBrosClips The passionated fuck that is Jessa Rhodes (22.01.2017) rq.mp4" )
+    print( db.arrData )
     
 # invoke the main
 main()
