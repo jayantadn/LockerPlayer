@@ -35,11 +35,6 @@ from consolemenu.items import *
 from const import *
 from db import DB
 
-# conditional imports
-if os.name == "nt":
-    import win32api
-    import win32con
-
 
 # global variables
 CONFIG = dict()
@@ -47,10 +42,6 @@ db = DB()
 
 
 # --- all function definitions ---
-
-def cleanup():
-    """remove all deleted files from database."""
-    shutil.rmtree(TMPDIR)
 
 
 def fix_movie_folder():
@@ -139,19 +130,12 @@ def init():
     if not os.path.isfile(CONFIG["SPLITTER"]):
         print("[WARNING] Configured movie splitter does not exist")
 
-    # create tmp folder
-    if os.path.exists(TMPDIR):
-        shutil.rmtree(TMPDIR)
-    while os.path.exists(TMPDIR):
-        time.sleep(0.01)
-    os.mkdir(TMPDIR)
-
 
 def play_file():
     """play a given file. if no parameters provided, play random."""
     if not len(db.arrData) == 0:
         idx = random.randrange(0, len(db.arrData), 1)
-        os.system(CONFIG["PLAYER"] + " " + db.arrData[idx]["path"])
+        os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrData[idx]["rel_path"]))
     else:
         input("[ERROR] No movies found. Press <enter> to continue...")
 
@@ -160,9 +144,16 @@ def refresh_db():
     """traverse movie folder and update the database"""
     for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
         for file in files:
+            # check for file extension
+            ext = os.path.splitext(file)[1]
+            if ext not in EXTLIST:
+                continue
+
+            # add to database if not exist already
             path = os.path.join(root, file)
-            if not db.exists(path):
-                db.add(path)
+            rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
+            if not db.exists(rel_path):
+                db.add(rel_path)
 
 
 def show_menu_main():
@@ -186,7 +177,6 @@ def main():
     """program entry point"""
     init()
     show_menu_main()
-    cleanup()
 
 
 # invoke the main
