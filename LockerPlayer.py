@@ -133,9 +133,9 @@ def init():
 
 def play_file():
     """play a given file. if no parameters provided, play random."""
-    if not len(db.arrData) == 0:
-        idx = random.randrange(0, len(db.arrData), 1)
-        os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrData[idx]["rel_path"]))
+    if not len(db.arrMovie) == 0:
+        idx = random.randrange(0, len(db.arrMovie), 1)
+        os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrMovie[idx]["rel_path"]))
     else:
         input("[ERROR] No movies found. Press <enter> to continue...")
 
@@ -163,14 +163,27 @@ def show_menu_main():
     menu_main.append_item(item_play_file)
 
     menu_other = ConsoleMenu("Other options")
-    item_refresh_db = FunctionItem("Refresh database", refresh_db)
-    menu_other.append_item(item_refresh_db)
-    item_refresh_db = FunctionItem("Fix movie folder", fix_movie_folder)
-    menu_other.append_item(item_refresh_db)
+    menu_other.append_item(FunctionItem("Refresh database", refresh_db))
+    menu_other.append_item(FunctionItem("Fix movie folder", fix_movie_folder))
+    menu_other.append_item(FunctionItem("Show statistics", show_stats))
 
     item_other = SubmenuItem("Other options", menu_other, menu_main)
     menu_main.append_item(item_other)
     menu_main.show()
+
+
+def show_stats():
+    """Show statistics about the movie database"""
+    cnt_played, cnt_high_rated = 0, 0
+    for movie in db.arrMovie:
+        if not movie["playcount"] == 0:
+            cnt_played += 1
+        if movie["rating"] is not None and int(movie["rating"]) > 4:
+            cnt_high_rated += 1
+    print("Total number of movies: ", len(db.arrMovie))
+    print("Number of movies played: ", cnt_played)
+    print("Number of high rated movies: ", cnt_high_rated)
+    input("\nPress <enter> to continue...")
 
 
 def main():
