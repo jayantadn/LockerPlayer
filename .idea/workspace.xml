@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0d48c605-4b73-4c7f-9e3d-f6244676a5f3" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/LockerPlayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/LockerPlayer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LockerPlayer.wpr" beforeDir="false" afterPath="$PROJECT_DIR$/LockerPlayer.wpr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/const.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -14,20 +14,40 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/LockerPlayer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1535">
-              <caret line="137" column="24" lean-forward="true" selection-start-line="137" selection-start-column="24" selection-end-line="137" selection-end-column="24" />
+            <state relative-caret-position="731">
+              <caret line="169" column="17" selection-start-line="169" selection-start-column="17" selection-end-line="169" selection-end-column="17" />
+              <folding>
+                <element signature="n#!!doc" />
+                <element signature="e#1133#1143#0" expanded="true" />
+                <element signature="e#1494#1565#0" />
+                <element signature="e#1613#3065#0" />
+                <element signature="e#1758#1816#0" />
+                <element signature="e#1924#2138#0" />
+                <element signature="e#2293#2346#0" />
+                <element signature="e#3271#3571#0" />
+                <element signature="e#3377#3490#0" />
+                <element signature="e#3596#4947#0" />
+                <element signature="e#3774#4176#0" />
+                <element signature="e#3805#4176#0" />
+                <element signature="e#4274#4947#0" />
+                <element signature="e#4389#4512#0" />
+                <element signature="e#4567#4741#0" />
+                <element signature="e#4859#4947#0" />
+                <element signature="e#4976#5437#0" />
+                <element signature="e#5503#5521#0" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/db.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/const.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="583">
-              <caret line="86" column="44" lean-forward="true" selection-start-line="86" selection-start-column="44" selection-end-line="86" selection-end-column="44" />
+            <state relative-caret-position="510">
+              <caret line="31" lean-forward="true" selection-start-line="31" selection-end-line="31" />
             </state>
           </provider>
         </entry>
@@ -55,9 +75,9 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
+        <option value="$PROJECT_DIR$/db.py" />
         <option value="$PROJECT_DIR$/const.py" />
         <option value="$PROJECT_DIR$/LockerPlayer.py" />
-        <option value="$PROJECT_DIR$/db.py" />
       </list>
     </option>
   </component>
@@ -92,7 +112,7 @@
   <component name="PropertiesComponent">
     <property name="restartRequiresConfirmation" value="false" />
     <property name="run.code.analysis.last.selected.profile" value="aDefault" />
-    <property name="settings.editor.selected.configurable" value="Errors" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -106,8 +126,8 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.LockerPlayer (1)">
-    <configuration name="LockerPlayer (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
+  <component name="RunManager">
+    <configuration name="LockerPlayer" type="PythonConfigurationType" factoryName="Python">
       <module name="LockerPlayer" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -149,11 +169,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python.LockerPlayer (1)" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -168,25 +183,34 @@
     </task>
     <servers />
   </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49945828" visible="true" weight="0.18703899" />
-      <window_info id="Structure" order="1" sideWeight="0.5005417" side_tool="true" visible="true" weight="0.18703899" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49837488" visible="true" weight="0.18703899" />
+      <window_info id="Structure" order="1" sideWeight="0.5016251" side_tool="true" visible="true" weight="0.18703899" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="Inspection Results" weight="0.32936078" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" auto_hide="true" id="Run" order="2" weight="0.32936078" />
+      <window_info anchor="bottom" auto_hide="true" x="564" y="283" width="1159" height="468" id="Run" order="2" type="SLIDING" weight="0.32936078" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32936078" />
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Terminal" order="8" weight="0.32936078" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="10" weight="0.32936078" />
+      <window_info anchor="bottom" id="Inspection Results" order="11" weight="0.32936078" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -195,6 +219,13 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/libDb.sh">
       <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/db.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="583">
+          <caret line="86" column="44" lean-forward="true" selection-start-line="86" selection-start-column="44" selection-end-line="86" selection-end-column="44" />
+        </state>
+      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/const.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -205,15 +236,28 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/LockerPlayer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1535">
-          <caret line="137" column="24" lean-forward="true" selection-start-line="137" selection-start-column="24" selection-end-line="137" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/db.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="583">
-          <caret line="86" column="44" lean-forward="true" selection-start-line="86" selection-start-column="44" selection-end-line="86" selection-end-column="44" />
+        <state relative-caret-position="731">
+          <caret line="169" column="17" selection-start-line="169" selection-start-column="17" selection-end-line="169" selection-end-column="17" />
+          <folding>
+            <element signature="n#!!doc" />
+            <element signature="e#1133#1143#0" expanded="true" />
+            <element signature="e#1494#1565#0" />
+            <element signature="e#1613#3065#0" />
+            <element signature="e#1758#1816#0" />
+            <element signature="e#1924#2138#0" />
+            <element signature="e#2293#2346#0" />
+            <element signature="e#3271#3571#0" />
+            <element signature="e#3377#3490#0" />
+            <element signature="e#3596#4947#0" />
+            <element signature="e#3774#4176#0" />
+            <element signature="e#3805#4176#0" />
+            <element signature="e#4274#4947#0" />
+            <element signature="e#4389#4512#0" />
+            <element signature="e#4567#4741#0" />
+            <element signature="e#4859#4947#0" />
+            <element signature="e#4976#5437#0" />
+            <element signature="e#5503#5521#0" />
+          </folding>
         </state>
       </provider>
     </entry>

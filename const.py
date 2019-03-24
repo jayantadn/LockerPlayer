@@ -29,3 +29,4 @@ CURDIR = os.path.dirname( sys.argv[0] )
 TMPDIR = os.path.join( CURDIR, "tmp" )
 CONFIGFILE = os.path.join( CURDIR, "config.txt" )
 DBDIR = os.path.join( CURDIR, "database.json" )
+

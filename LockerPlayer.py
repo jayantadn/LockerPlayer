@@ -30,9 +30,16 @@ import json
 from consolemenu import *
 from consolemenu.items import *
 
+
 # import internal modules
 from const import *
 from db import DB
+
+# conditional imports
+if os.name == "nt":
+    import win32api
+    import win32con
+
 
 # global variables
 CONFIG = dict()
@@ -55,7 +62,7 @@ def get_config():
         quit()
 
     # open the config file and read all parameters
-    fo = open(CONFIGFILE, "r")
+    fo = open(CONFIGFILE)
     while True:
         line = fo.readline()  # this will include the newline character which needs to be removed later
         if not line: break
@@ -74,7 +81,7 @@ def get_config():
         CONFIG[key] = CONFIG[key][:-1]
 
     # validate the configuration
-    if not os.path.isdir(os.path.normpath(CONFIG["MOVIEDIR"])):
+    if not os.path.isdir(CONFIG["MOVIEDIR"]):
         print("[ERROR] Configured movie directory does not exist")
         quit()
     if not os.path.isfile(CONFIG["PLAYER"]):
@@ -155,9 +162,16 @@ def show_menu_main():
 
 def main():
     """program entry point"""
+    while True:
+        passwd = input("Enter password: ")
+        if not passwd == "passwd":
+            print("Invalid password. Try again.")
+        else:
+            break
+
     get_config()
-    show_menu_main()
-    cleanup()
+    # show_menu_main()
+    # cleanup()
 
 
 # invoke the main
