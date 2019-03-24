@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="0d48c605-4b73-4c7f-9e3d-f6244676a5f3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/LockerPlayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/LockerPlayer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/db.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -12,13 +13,12 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/LockerPlayer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="119">
-              <caret line="41" lean-forward="true" selection-start-line="41" selection-end-line="41" />
+            <state relative-caret-position="531">
+              <caret line="108" column="12" selection-start-line="108" selection-start-column="12" selection-end-line="108" selection-end-column="12" />
               <folding>
-                <element signature="n#!!doc" />
                 <element signature="e#1624#2610#0" />
                 <element signature="e#1743#1846#0" />
                 <element signature="e#1881#2040#0" />
@@ -27,19 +27,11 @@
                 <element signature="e#1826#1949#0" />
                 <element signature="e#2503#2677#0" />
                 <element signature="e#2296#2384#0" />
-                <element signature="e#3206#4694#0" />
                 <element signature="e#1708#1859#0" />
                 <element signature="e#1758#1816#0" />
-                <element signature="e#1924#2138#0" />
                 <element signature="e#2293#2346#0" />
                 <element signature="e#2570#2643#0" />
                 <element signature="e#2697#2767#0" />
-                <element signature="e#3271#3571#0" />
-                <element signature="e#4732#4883#0" />
-                <element signature="e#3635#3940#0" />
-                <element signature="e#3774#4176#0" />
-                <element signature="e#5361#5735#0" />
-                <element signature="e#4976#5437#0" />
                 <element signature="e#6204#6261#0" />
               </folding>
             </state>
@@ -49,17 +41,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/db.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="719">
-              <caret line="94" column="39" selection-start-line="94" selection-start-column="39" selection-end-line="94" selection-end-column="39" />
+            <state relative-caret-position="153">
+              <caret line="36" column="90" selection-start-line="36" selection-start-column="90" selection-end-line="36" selection-end-column="90" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/const.py">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ImportCSV.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="510">
-              <caret line="31" column="102" selection-start-line="31" selection-start-column="102" selection-end-line="31" selection-end-column="102" />
+            <state relative-caret-position="702">
+              <caret line="50" column="16" selection-start-line="50" selection-start-column="16" selection-end-line="50" selection-end-column="16" />
             </state>
           </provider>
         </entry>
@@ -78,9 +70,12 @@
       <find>itemOther</find>
       <find>path</find>
       <find>arrData</find>
+      <find>arrMovie</find>
     </findStrings>
     <replaceStrings>
       <replace>item_other</replace>
+      <replace>arrMovie</replace>
+      <replace>arrMovies</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -89,9 +84,10 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/db.py" />
         <option value="$PROJECT_DIR$/const.py" />
         <option value="$PROJECT_DIR$/LockerPlayer.py" />
+        <option value="$PROJECT_DIR$/db.py" />
+        <option value="$PROJECT_DIR$/ImportCSV.py" />
       </list>
     </option>
   </component>
@@ -140,7 +136,28 @@
       </list>
     </option>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.LockerPlayer">
+    <configuration name="ImportCSV" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="LockerPlayer" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ImportCSV.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="LockerPlayer" type="PythonConfigurationType" factoryName="Python">
       <module name="LockerPlayer" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -183,6 +200,15 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Python.LockerPlayer" />
+      <item itemvalue="Python.ImportCSV" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.ImportCSV" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -208,6 +234,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49837488" visible="true" weight="0.18703899" />
       <window_info id="Structure" order="1" sideWeight="0.5016251" side_tool="true" visible="true" weight="0.18703899" />
@@ -233,26 +260,11 @@
     <entry file="file://$PROJECT_DIR$/libDb.sh">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/db.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="719">
-          <caret line="94" column="39" selection-start-line="94" selection-start-column="39" selection-end-line="94" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/const.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="510">
-          <caret line="31" column="102" selection-start-line="31" selection-start-column="102" selection-end-line="31" selection-end-column="102" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/LockerPlayer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="41" lean-forward="true" selection-start-line="41" selection-end-line="41" />
+        <state relative-caret-position="531">
+          <caret line="108" column="12" selection-start-line="108" selection-start-column="12" selection-end-line="108" selection-end-column="12" />
           <folding>
-            <element signature="n#!!doc" />
             <element signature="e#1624#2610#0" />
             <element signature="e#1743#1846#0" />
             <element signature="e#1881#2040#0" />
@@ -261,21 +273,34 @@
             <element signature="e#1826#1949#0" />
             <element signature="e#2503#2677#0" />
             <element signature="e#2296#2384#0" />
-            <element signature="e#3206#4694#0" />
             <element signature="e#1708#1859#0" />
             <element signature="e#1758#1816#0" />
-            <element signature="e#1924#2138#0" />
             <element signature="e#2293#2346#0" />
             <element signature="e#2570#2643#0" />
             <element signature="e#2697#2767#0" />
-            <element signature="e#3271#3571#0" />
-            <element signature="e#4732#4883#0" />
-            <element signature="e#3635#3940#0" />
-            <element signature="e#3774#4176#0" />
-            <element signature="e#5361#5735#0" />
-            <element signature="e#4976#5437#0" />
             <element signature="e#6204#6261#0" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/const.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="527">
+          <caret line="32" lean-forward="true" selection-start-line="32" selection-end-line="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/db.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="36" column="90" selection-start-line="36" selection-start-column="90" selection-end-line="36" selection-end-column="90" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ImportCSV.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="702">
+          <caret line="50" column="16" selection-start-line="50" selection-start-column="16" selection-end-line="50" selection-end-column="16" />
         </state>
       </provider>
     </entry>

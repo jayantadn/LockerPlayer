@@ -30,11 +30,17 @@ from datetime import datetime
 from const import *
 
 
+# strategy: what should be a unique identity of a movie
+# title - possible duplicate filenames
+# full path - the base movie folder may change.
+# relative path - a movie may be moved from one folder to another.
+# as of now relative path is selected, because moving a movie will change its stats anyway
+
 class DB:
     """database class"""
     # contructor
     def __init__(self):
-        self.arrMovie = []
+        self.arrMovies = []
         if not os.path.exists(DBDIR):
             fo = open(DBDIR, "w")
             fo.close()
@@ -42,13 +48,13 @@ class DB:
             fo = open(DBDIR, "r")
             contents = fo.read()
             if not len(contents) == 0:
-                self.arrMovie = json.loads(contents)
+                self.arrMovies = json.loads(contents)
             fo.close()
 
     def save(self):
         """save database from to disk"""
         fo = open(DBDIR, "w")
-        fo.write(json.dumps(self.arrMovie, indent=4))
+        fo.write(json.dumps(self.arrMovies, indent=4))
         fo.close()
 
     def add(self, rel_path):
@@ -65,33 +71,33 @@ class DB:
             "split": False,
             "note": None
         }
-        self.arrMovie.append(entry)
+        self.arrMovies.append(entry)
         self.save()
 
     def remove(self, rel_path):
         """remove a movie from database"""
-        for idx, data in enumerate(self.arrMovie):
+        for idx, data in enumerate(self.arrMovies):
             if data["rel_path"] == rel_path:
                 print("Removing from database: ", rel_path)
-                self.arrMovie[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-                self.arrMovie[idx]["isValid"] = False
+                self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+                self.arrMovies[idx]["isValid"] = False
                 self.save()
                 break
 
     def update(self, rel_path, key, val):
         """update attributes for a movie"""
-        for idx, data in enumerate(self.arrMovie):
+        for idx, data in enumerate(self.arrMovies):
             if data["rel_path"] == rel_path:
                 print("Updating ", key, "to ", val, "for ", rel_path)
-                self.arrMovie[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-                self.arrMovie[idx][key] = val
+                self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+                self.arrMovies[idx][key] = val
                 self.save()
                 break
 
     def exists(self, rel_path):
         """check if a movie exist in database"""
         flg_exist = False
-        for data in self.arrMovie:
+        for data in self.arrMovies:
             if data["rel_path"] == rel_path:
                 flg_exist = True
         return flg_exist

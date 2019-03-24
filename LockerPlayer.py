@@ -105,7 +105,8 @@ def init():
     fo = open(CONFIGFILE)
     while True:
         line = fo.readline()  # this will include the newline character which needs to be removed later
-        if not line: break
+        if not line:
+            break
         key = line.split("=")[0]
         val = line.split("=")[1]
         CONFIG[key] = val
@@ -133,9 +134,9 @@ def init():
 
 def play_file():
     """play a given file. if no parameters provided, play random."""
-    if not len(db.arrMovie) == 0:
-        idx = random.randrange(0, len(db.arrMovie), 1)
-        os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrMovie[idx]["rel_path"]))
+    if not len(db.arrMovies) == 0:
+        idx = random.randrange(0, len(db.arrMovies), 1)
+        os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrMovies[idx]["rel_path"]))
     else:
         input("[ERROR] No movies found. Press <enter> to continue...")
 
@@ -175,12 +176,12 @@ def show_menu_main():
 def show_stats():
     """Show statistics about the movie database"""
     cnt_played, cnt_high_rated = 0, 0
-    for movie in db.arrMovie:
+    for movie in db.arrMovies:
         if not movie["playcount"] == 0:
             cnt_played += 1
         if movie["rating"] is not None and int(movie["rating"]) > 4:
             cnt_high_rated += 1
-    print("Total number of movies: ", len(db.arrMovie))
+    print("Total number of movies: ", len(db.arrMovies))
     print("Number of movies played: ", cnt_played)
     print("Number of high rated movies: ", cnt_high_rated)
     input("\nPress <enter> to continue...")
