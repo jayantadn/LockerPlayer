@@ -53,8 +53,57 @@ def cleanup():
     shutil.rmtree(TMPDIR)
 
 
-def get_config():
+def fix_movie_folder():
+    """fix problems in the movie folder"""
+
+    # local variables
+    arr_filename_errors = []
+    arr_dirname_errors = []
+
+    # algorithm: try to print full path of all files. If some invalid characters are found in the filename,
+    # exception will be thrown. List the parent folder of such files. If parent folder name also has invalid characters,
+    # print the parent of parent.
+    # assumption: only movie name or movie folder names can have errors. Any other parent folder is very likely
+    # manually created.
+
+    # traverse through movie folder and check if all filenames are valid
+    for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
+        for file in files:
+            path = os.path.join(root, file)
+            try:
+                print("checking filename: ", path)
+            except UnicodeEncodeError:
+                arr_filename_errors.append(root)
+
+    # display the filename and dirname errors
+    if not len(arr_filename_errors) == 0:
+        print("[WARNING] Invalid file or folder name found under:")
+        for pardir in arr_filename_errors:
+            try:
+                print(pardir)
+            except UnicodeEncodeError:
+                arr_dirname_errors.append(pardir)
+        for pardir in arr_dirname_errors:
+            try:
+                print(os.path.dirname(pardir))
+            except UnicodeEncodeError:
+                print("[WARNING] Invalid names found in some unidentified folders")
+        fix = input("Please fix the filenames manually. [F]ixed, [S]kip ")
+        if fix in ('F', 'f'):
+            print("Filenames are assumed fixed. Refreshing database again")
+            refresh_db()
+
+
+def init():
     """read the configuration file and retrieve the configuration parameters"""
+
+    # run the script only with a password
+    while True:
+        passwd = input("Enter password: ")
+        if not passwd == "passwd":
+            print("Invalid password. Try again.")
+        else:
+            break
 
     # check if config file exist, else exit
     if not os.path.exists(CONFIGFILE):
@@ -109,40 +158,11 @@ def play_file():
 
 def refresh_db():
     """traverse movie folder and update the database"""
-    arr_filename_errors = []
-    arr_dirname_errors = []
     for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
         for file in files:
-            # creating the full path
             path = os.path.join(root, file)
-
-            # check if filename is valid
-            try:
-                print("Adding to database: ", path)
-            except UnicodeEncodeError:
-                arr_filename_errors.append(root)
-
-            # adding file to database
             if not db.exists(path):
                 db.add(path)
-
-    # display the filename and dirname errors
-    if not len(arr_filename_errors) == 0:
-        print("[WARNING] Invalid file or folder name found under:")
-        for pardir in arr_filename_errors:
-            try:
-                print(pardir)
-            except UnicodeEncodeError:
-                arr_dirname_errors.append(pardir)
-        for pardir in arr_dirname_errors:
-            try:
-                print(os.path.dirname(pardir))
-            except UnicodeEncodeError:
-                print("[WARNING] Invalid names found in some unidentified folders")
-        fix = input("Please fix the filenames manually. [F]ixed, [S]kip ")
-        if fix in ('F', 'f'):
-            print("Filenames are assumed fixed. Refreshing database again")
-            refresh_db()
 
 
 def show_menu_main():
@@ -154,6 +174,8 @@ def show_menu_main():
     menu_other = ConsoleMenu("Other options")
     item_refresh_db = FunctionItem("Refresh database", refresh_db)
     menu_other.append_item(item_refresh_db)
+    item_refresh_db = FunctionItem("Fix movie folder", fix_movie_folder)
+    menu_other.append_item(item_refresh_db)
 
     item_other = SubmenuItem("Other options", menu_other, menu_main)
     menu_main.append_item(item_other)
@@ -162,16 +184,9 @@ def show_menu_main():
 
 def main():
     """program entry point"""
-    while True:
-        passwd = input("Enter password: ")
-        if not passwd == "passwd":
-            print("Invalid password. Try again.")
-        else:
-            break
-
-    get_config()
-    # show_menu_main()
-    # cleanup()
+    init()
+    show_menu_main()
+    cleanup()
 
 
 # invoke the main
