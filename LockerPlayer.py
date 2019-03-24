@@ -154,8 +154,8 @@ def play_file():
                 if movie["actor"] == actor:
                     cnt_movies += 1
                     cnt_played += int(movie["playcount"])
-            print("Total movies for this actor: ", cnt_movies)
-            print("Number of movies played for this actor: ", cnt_played)
+            print("Total movies of this actor: ", cnt_movies)
+            print("Movies played of this actor: ", cnt_played)
 
         # prompt the user
         choice = input("1. Play\t 2. Retry\t 3. Main menu\n Enter your choice: ")
@@ -229,7 +229,7 @@ def show_stats():
     for movie in db.arrMovies:
         if not movie["playcount"] == 0:
             cnt_played += 1
-        if movie["rating"] is not None and int(movie["rating"]) > 4:
+        if movie["rating"] is not None and int(movie["rating"]) >= 4:
             cnt_high_rated += 1
     print("Total number of movies: ", len(db.arrMovies))
     print("Number of movies played: ", cnt_played)

@@ -35,6 +35,7 @@ from const import *
 # full path - the base movie folder may change.
 # relative path - a movie may be moved from one folder to another.
 # as of now relative path is selected, because moving a movie will change its stats anyway
+# in future title is probably best, if we can find a way to preserve stats if a file is moved to different folder
 
 class DB:
     """database class"""
@@ -66,7 +67,7 @@ class DB:
             "is_valid": True,
             "rating": None,
             "playcount": 0,
-            "actor": None,
+            "actor": rel_path.split("\\")[1],
             "category": "Straight",
             "delete": False,
             "split": False,

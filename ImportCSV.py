@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 from db import DB
 
 db = DB()
@@ -36,19 +37,27 @@ while True:
         arrFields = line.split(",")
 
         rel_path = arrFields[6]
+        title = arrFields[5]
         rating = int(arrFields[1])
         playcount = int(arrFields[2])
         actor = arrFields[3]
         category = arrFields[4]
 
-        if db.exists(rel_path):
+        lookup_path = None
+        for movie in db.arrMovies:
+            if os.path.basename(movie["rel_path"]) == title:
+                lookup_path = movie["rel_path"]
+                break
+
+        if db.exists(lookup_path):
             if rating > 0:
-                db.update(rel_path, "rating", rating)
+                db.update(lookup_path, "rating", rating)
             if playcount > 0:
-                db.update(rel_path, "playcount", playcount)
-            db.update(rel_path, "actor", actor)
+                db.update(lookup_path, "playcount", playcount)
+            if not actor == "Unknown":
+                db.update(lookup_path, "actor", actor)
             if not category == "Straight":
-                db.update(rel_path, "category", category)
+                db.update(lookup_path, "category", category)
 
     # ignore all errors
     except (UnicodeDecodeError, IndexError, ValueError) as e:
