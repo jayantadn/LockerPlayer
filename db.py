@@ -97,7 +97,13 @@ class DB:
             if data["rel_path"] == rel_path:
                 print("Updating ", key, "to ", val, "for ", rel_path)
                 self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-                self.arrMovies[idx][key] = val
+                if key in ("rating", "playcount"):
+                    self.arrMovies[idx][key] = int(val)
+                elif key in ("is_valid", "delete", "split"):
+                    if not val in (True, False):
+                        print("ERROR: ", key, " can only have the value True or False")
+                else:
+                    self.arrMovies[idx][key] = val
                 self.save()
                 break
 

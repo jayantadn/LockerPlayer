@@ -144,22 +144,36 @@ def play_file():
         print("title = ", os.path.basename(db.arrMovies[idx]["rel_path"]))
         print("category = ", db.arrMovies[idx]["category"])
         print("rating = ", db.arrMovies[idx]["rating"])
-        print("playcount = ", db.arrMovies[idx]["playcount"])
 
         # print stats for actor
-        cnt_movies = 0
-        cnt_played = 0
-        for movie in db.arrMovies:
-            if movie["actor"] == db.arrMovies[idx]["actor"]:
-                cnt_movies += 1
-                cnt_played += int(movie["playcount"])
-        print("Total movies for this actor: ", cnt_movies)
-        print("Number of movies played for this actor: ", cnt_played)
+        actor = db.arrMovies[idx]["actor"]
+        if actor is not None and not actor == "Unknown":
+            cnt_movies = 0
+            cnt_played = 0
+            for movie in db.arrMovies:
+                if movie["actor"] == actor:
+                    cnt_movies += 1
+                    cnt_played += int(movie["playcount"])
+            print("Total movies for this actor: ", cnt_movies)
+            print("Number of movies played for this actor: ", cnt_played)
 
         # prompt the user
         choice = input("1. Play\t 2. Retry\t 3. Main menu\n Enter your choice: ")
         if choice == "1":
+            # play the movie and update playcount
+            playcount = int(db.arrMovies[idx]["playcount"]) + 1
+            db.update(db.arrMovies[idx]["rel_path"], "playcount", playcount)
             os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrMovies[idx]["rel_path"]))
+
+            # post play menu
+            post_play = input("1. Rate\t 2. Delete\t 3. Main menu\n Enter your choice: ")
+            if post_play == "1":
+                rating = input("Enter your rating: ")
+                db.update(db.arrMovies[idx]["rel_path"], "rating", rating)
+            elif post_play == "2":
+                delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
+                if delete == "1":
+                    db.update(db.arrMovies[idx]["rel_path"], "delete", True)
         elif choice == "2":
             play_file()
     else:
