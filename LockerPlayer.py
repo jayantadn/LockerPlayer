@@ -143,6 +143,17 @@ def play_file():
 
 def refresh_db():
     """traverse movie folder and update the database"""
+
+    # remove any invalid entries
+    db.cleanup()
+
+    # check for non-existent entries in database
+    for movie in db.arrMovies:
+        full_path = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
+        if not os.path.exists(full_path):
+            db.remove(movie["rel_path"])
+
+    # add any new files
     for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
         for file in files:
             # check for file extension

@@ -63,11 +63,12 @@ class DB:
         entry = {
             "rel_path": rel_path,
             "timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
-            "isValid": True,
+            "is_valid": True,
             "rating": None,
             "playcount": 0,
             "actor": None,
             "category": "Straight",
+            "delete": False,
             "split": False,
             "note": None
         }
@@ -76,11 +77,17 @@ class DB:
 
     def remove(self, rel_path):
         """remove a movie from database"""
+
+        # strategy: delete movie command from user will set the delete flag.
+        # during fix_movie_folder(), the movie will be deleted from the actual filesystem.
+        # then, the is_valid flag will be reset.
+        # during refresh_db() the invalid flags will be removed from database
+
         for idx, data in enumerate(self.arrMovies):
             if data["rel_path"] == rel_path:
                 print("Removing from database: ", rel_path)
                 self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-                self.arrMovies[idx]["isValid"] = False
+                self.arrMovies[idx]["is_valid"] = False
                 self.save()
                 break
 
@@ -101,3 +108,10 @@ class DB:
             if data["rel_path"] == rel_path:
                 flg_exist = True
         return flg_exist
+
+    def cleanup(self):
+        """remove the invalid entries"""
+        for movie in self.arrMovies:
+            if not movie["is_valid"]:
+                print("Removing from database: ", movie["rel_path"])
+                self.arrMovies.remove(movie)
