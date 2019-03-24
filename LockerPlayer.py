@@ -135,8 +135,33 @@ def init():
 def play_file():
     """play a given file. if no parameters provided, play random."""
     if not len(db.arrMovies) == 0:
+        # get a random file
         idx = random.randrange(0, len(db.arrMovies), 1)
-        os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrMovies[idx]["rel_path"]))
+
+        # print stats for the file
+        print("\nWe found the following movie for you:")
+        print("actor = ", db.arrMovies[idx]["actor"])
+        print("title = ", os.path.basename(db.arrMovies[idx]["rel_path"]))
+        print("category = ", db.arrMovies[idx]["category"])
+        print("rating = ", db.arrMovies[idx]["rating"])
+        print("playcount = ", db.arrMovies[idx]["playcount"])
+
+        # print stats for actor
+        cnt_movies = 0
+        cnt_played = 0
+        for movie in db.arrMovies:
+            if movie["actor"] == db.arrMovies[idx]["actor"]:
+                cnt_movies += 1
+                cnt_played += int(movie["playcount"])
+        print("Total movies for this actor: ", cnt_movies)
+        print("Number of movies played for this actor: ", cnt_played)
+
+        # prompt the user
+        choice = input("1. Play\t 2. Retry\t 3. Main menu\n Enter your choice: ")
+        if choice == "1":
+            os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrMovies[idx]["rel_path"]))
+        elif choice == "2":
+            play_file()
     else:
         input("[ERROR] No movies found. Press <enter> to continue...")
 
