@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0d48c605-4b73-4c7f-9e3d-f6244676a5f3" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ImportCSV.py" beforeDir="false" afterPath="$PROJECT_DIR$/ImportCSV.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/LockerPlayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/LockerPlayer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/config.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LockerPlayer.wpr" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -19,8 +16,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/LockerPlayer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="493">
-              <caret line="157" column="35" selection-start-line="157" selection-start-column="35" selection-end-line="157" selection-end-column="35" />
+            <state relative-caret-position="255">
+              <caret line="87" column="4" selection-start-line="87" selection-start-column="4" selection-end-line="87" selection-end-column="4" />
               <folding>
                 <element signature="n#!!doc" />
                 <element signature="e#1624#2610#0" />
@@ -31,7 +28,6 @@
                 <element signature="e#1826#1949#0" />
                 <element signature="e#2503#2677#0" />
                 <element signature="e#2296#2384#0" />
-                <element signature="e#3206#4694#0" />
                 <element signature="e#1708#1859#0" />
                 <element signature="e#1758#1816#0" />
                 <element signature="e#1924#2138#0" />
@@ -40,7 +36,6 @@
                 <element signature="e#2697#2767#0" />
                 <element signature="e#5348#5482#0" />
                 <element signature="e#5413#5482#0" />
-                <element signature="e#5808#6613#0" />
                 <element signature="e#6283#6395#0" />
                 <element signature="e#6447#6628#0" />
                 <element signature="e#5148#5277#0" />
@@ -90,6 +85,7 @@
       <find>arrData</find>
       <find>arrMovie</find>
       <find>&gt; 4</find>
+      <find>Enter your choice</find>
     </findStrings>
     <replaceStrings>
       <replace>item_other</replace>
@@ -282,7 +278,7 @@
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49837488" visible="true" weight="0.18703899" />
-      <window_info id="Structure" order="1" sideWeight="0.5016251" side_tool="true" visible="true" weight="0.18703899" />
+      <window_info active="true" id="Structure" order="1" sideWeight="0.5016251" side_tool="true" visible="true" weight="0.18703899" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32936078" />
@@ -331,8 +327,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/LockerPlayer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="493">
-          <caret line="157" column="35" selection-start-line="157" selection-start-column="35" selection-end-line="157" selection-end-column="35" />
+        <state relative-caret-position="255">
+          <caret line="87" column="4" selection-start-line="87" selection-start-column="4" selection-end-line="87" selection-end-column="4" />
           <folding>
             <element signature="n#!!doc" />
             <element signature="e#1624#2610#0" />
@@ -343,7 +339,6 @@
             <element signature="e#1826#1949#0" />
             <element signature="e#2503#2677#0" />
             <element signature="e#2296#2384#0" />
-            <element signature="e#3206#4694#0" />
             <element signature="e#1708#1859#0" />
             <element signature="e#1758#1816#0" />
             <element signature="e#1924#2138#0" />
@@ -352,7 +347,6 @@
             <element signature="e#2697#2767#0" />
             <element signature="e#5348#5482#0" />
             <element signature="e#5413#5482#0" />
-            <element signature="e#5808#6613#0" />
             <element signature="e#6283#6395#0" />
             <element signature="e#6447#6628#0" />
             <element signature="e#5148#5277#0" />
