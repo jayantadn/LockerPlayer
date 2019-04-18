@@ -158,7 +158,7 @@ def play_file():
             print("Movies played of this actor: ", cnt_played)
 
         # prompt the user
-        choice = input("1. Play\t 2. Retry\t 3. Main menu \nEnter your choice: ")
+        choice = input("1. Play\t 2. Retry\t 0. Main menu \nEnter your choice: ")
         if choice == "1":
             # play the movie and update playcount
             playcount = int(db.arrMovies[idx]["playcount"]) + 1
@@ -166,7 +166,7 @@ def play_file():
             os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrMovies[idx]["rel_path"]))
 
             # post play menu
-            post_play = input("1. Rate\t 2. Delete\t 3. Main menu \nEnter your choice: ")
+            post_play = input("1. Rate\t 2. Delete\t 0. Main menu \nEnter your choice: ")
             if post_play == "1":
                 rating = input("Enter your rating: ")
                 db.update(db.arrMovies[idx]["rel_path"], "rating", rating)
@@ -205,6 +205,8 @@ def refresh_db():
             rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
             if not db.exists(rel_path):
                 db.add(rel_path)
+				
+	input("Database refreshed. Press <enter> to continue...")
 
 
 def show_menu_main():
