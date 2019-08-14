@@ -67,9 +67,9 @@ def copy_hi_movies():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("Exception occurred. Press <enter> to continue...")
+		input("\nException occurred. Press <enter> to continue...")
 	else:
-		input("All files are copied. Press <enter> to continue...")
+		input("\nAll files are copied. Press <enter> to continue...")
 
 
 def fix_movie_folder():
@@ -116,9 +116,9 @@ def fix_movie_folder():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("Exception occurred. Press <enter> to continue...")
+		input("\nException occurred. Press <enter> to continue...")
 	else:
-		input("Movie folder is fixed. Press <enter> to continue...")
+		input("\nMovie folder is fixed. Press <enter> to continue...")
 
 
 def init():
@@ -168,11 +168,42 @@ def init():
 		print("[WARNING] Configured movie splitter does not exist")
 
 
-def play_file():
-	"""play a given file. if no parameters provided, play random."""
+def play_file(idxMovie):
+	"""play the movie and update playcount"""
 
+	playcount = int(db.arrMovies[idxMovie]["playcount"]) + 1
+	db.update(db.arrMovies[idxMovie]["rel_path"], "playcount", playcount)
+
+	os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"],
+		db.arrMovies[idxMovie]["rel_path"]))
+
+	# post play menu
+	post_play = input(
+		"1. Rate\t 2. Delete\t 0. Go back \nEnter your choice: ")
+
+	if post_play == "1":
+		rating = input("Enter your rating: ")
+		db.update(db.arrMovies[idxMovie]["rel_path"], "rating", rating)
+
+	elif post_play == "2":
+		delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
+		if delete == "1":
+			db.update(db.arrMovies[idxMovie]["rel_path"], "delete", True)
+
+	elif post_play == "0":
+		return
+
+	else:
+		print("ERROR: Invalid choice")
+		return
+
+
+def play_random() :
 	try:
-		if not len(db.arrMovies) == 0:
+		assert len(db.arrMovies) > 0, \
+			"[ERROR] No movies found"
+
+		while True:
 			# get a random file
 			idx = random.randrange(0, len(db.arrMovies), 1)
 
@@ -195,34 +226,26 @@ def play_file():
 				print("Total movies of this actor: ", cnt_movies)
 				print("Movies played of this actor: ", cnt_played)
 
-			# prompt the user
-			choice = input("1. Play\t 2. Retry\t 0. Main menu \nEnter your choice: ")
+			choice = input( "1. Play\t 2. Retry\t 0. Main menu \nEnter your choice: ")
 			if choice == "1":
-				# play the movie and update playcount
-				playcount = int(db.arrMovies[idx]["playcount"]) + 1
-				db.update(db.arrMovies[idx]["rel_path"], "playcount", playcount)
-				os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], db.arrMovies[idx]["rel_path"]))
+				play_file(idx)
 
-				# post play menu
-				post_play = input("1. Rate\t 2. Delete\t 0. Main menu \nEnter your choice: ")
-				if post_play == "1":
-					rating = input("Enter your rating: ")
-					db.update(db.arrMovies[idx]["rel_path"], "rating", rating)
-				elif post_play == "2":
-					delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
-					if delete == "1":
-						db.update(db.arrMovies[idx]["rel_path"], "delete", True)
 			elif choice == "2":
-				play_file()
-		else:
-			input("[ERROR] No movies found. Press <enter> to continue...")
+				continue
+
+			elif choice == "0" :
+				break
+
+			else :
+				print( "ERROR: Invalid choice" )
+				break
 
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("Exception occurred. Press <enter> to continue...")
+		input("\nException occurred. Press <enter> to continue...")
 	else:
-		input("Movie finished. Press <enter> to continue...")
+		input("\nPress <enter> to continue ...")
 
 
 def refresh_db():
@@ -255,15 +278,15 @@ def refresh_db():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("Exception occurred. Press <enter> to continue...")
+		input("\nException occurred. Press <enter> to continue...")
 	else:
-		input("Database refreshed. Press <enter> to continue...")
+		input("\nDatabase refreshed. Press <enter> to continue...")
 
 
 def show_menu():
 	"""show the main menu"""
 	menu_main = ConsoleMenu("Main menu")
-	item_play_file = FunctionItem("Play a random file", play_file)
+	item_play_file = FunctionItem("Play a random file", play_random)
 	menu_main.append_item(item_play_file)
 
 	menu_other = ConsoleMenu("Other options")
@@ -293,7 +316,7 @@ def show_stats():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("Exception occurred. Press <enter> to continue...")
+		input("\nException occurred. Press <enter> to continue...")
 	else:
 		input("\nPress <enter> to continue...")
 

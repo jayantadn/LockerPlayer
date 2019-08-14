@@ -1,0 +1,6 @@
+- Play random menu: play random file
+- Play random menu: retry random file
+- Play random menu: Main menu
+- post play: rate
+- post play: delete
+- post play: Go back
