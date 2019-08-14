@@ -30,11 +30,9 @@ import json
 from consolemenu import *
 from consolemenu.items import *
 
-
 # import internal modules
 from const import *
 from db import DB
-
 
 # global variables
 CONFIG = dict()
@@ -42,6 +40,27 @@ db = DB()
 
 
 # --- all function definitions ---
+
+def copy_hi_movies():
+	"""Copy high rated movies to another location"""
+
+	destdir = input( "Enter destination: " )
+	if not os.path.isdir(destdir) :
+		print( "Please enter a valid path" ); input();	return
+
+	rating = input( "Enter the minimum rating to copy: ")
+
+	for movie in db.arrMovies:
+		if movie["rating"] is not None and movie["rating"] >= int(rating):
+			src = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
+			dest = os.path.join(destdir, movie["rel_path"])
+			if not os.path.exists(os.path.dirname(dest)) :
+				os.makedirs(os.path.dirname(dest))
+			if not os.path.exists(dest):
+				print("Copying file:", movie["rel_path"])
+				shutil.copy2(src, dest)
+
+	input("All files are copied. Press <enter> to continue...")
 
 
 def fix_movie_folder():
@@ -206,10 +225,10 @@ def refresh_db():
 			if not db.exists(rel_path):
 				db.add(rel_path)
 
-		input("Database refreshed. Press <enter> to continue...")
+	input("Database refreshed. Press <enter> to continue...")
 
 
-def show_menu_main():
+def show_menu():
 	"""show the main menu"""
 	menu_main = ConsoleMenu("Main menu")
 	item_play_file = FunctionItem("Play a random file", play_file)
@@ -219,6 +238,7 @@ def show_menu_main():
 	menu_other.append_item(FunctionItem("Refresh database", refresh_db))
 	menu_other.append_item(FunctionItem("Fix movie folder", fix_movie_folder))
 	menu_other.append_item(FunctionItem("Show statistics", show_stats))
+	menu_other.append_item(FunctionItem("Copy high rated movies", copy_hi_movies))
 
 	item_other = SubmenuItem("Other options", menu_other, menu_main)
 	menu_main.append_item(item_other)
@@ -242,7 +262,7 @@ def show_stats():
 def main():
 	"""program entry point"""
 	init()
-	show_menu_main()
+	show_menu()
 
 
 # invoke the main

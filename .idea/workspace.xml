@@ -16,10 +16,11 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/LockerPlayer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="235">
-              <caret line="227" column="4" selection-start-line="227" selection-start-column="4" selection-end-line="227" selection-end-column="4" />
+            <state relative-caret-position="503">
+              <caret line="62" column="31" selection-start-line="62" selection-start-column="31" selection-end-line="62" selection-end-column="31" />
               <folding>
                 <element signature="n#!!doc" />
+                <element signature="e#1133#1143#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -51,6 +52,10 @@
       <find>arrMovie</find>
       <find>&gt; 4</find>
       <find>Enter your choice</find>
+      <find>&lt;enter</find>
+      <find>show_menu_main</find>
+      <find>shutil</find>
+      <find>&lt;en</find>
     </findStrings>
     <replaceStrings>
       <replace>item_other</replace>
@@ -67,8 +72,8 @@
         <option value="$PROJECT_DIR$/const.py" />
         <option value="$PROJECT_DIR$/ImportCSV.py" />
         <option value="$PROJECT_DIR$/db.py" />
-        <option value="$PROJECT_DIR$/LockerPlayer.py" />
         <option value="$PROJECT_DIR$/config.txt" />
+        <option value="$PROJECT_DIR$/LockerPlayer.py" />
       </list>
     </option>
   </component>
@@ -104,7 +109,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="run.code.analysis.last.selected.profile" value="aDefault" />
-    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.Python" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.JSON" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -242,13 +247,14 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.4957507" visible="true" weight="0.18638466" />
       <window_info active="true" id="Structure" order="1" sideWeight="0.5042493" side_tool="true" visible="true" weight="0.18638466" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32936078" />
-      <window_info anchor="bottom" auto_hide="true" x="564" y="283" width="1159" height="468" id="Run" order="2" type="SLIDING" weight="0.32936078" />
+      <window_info anchor="bottom" auto_hide="true" x="564" y="283" width="1159" height="468" id="Run" order="2" type="SLIDING" weight="0.3555241" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3997833" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -256,7 +262,7 @@
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Terminal" order="8" weight="0.32936078" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
-      <window_info anchor="bottom" id="Python Console" order="10" weight="0.32936078" />
+      <window_info anchor="bottom" id="Python Console" order="10" weight="0.3286119" />
       <window_info anchor="bottom" id="Inspection Results" order="11" weight="0.32936078" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -297,10 +303,11 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/LockerPlayer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="235">
-          <caret line="227" column="4" selection-start-line="227" selection-start-column="4" selection-end-line="227" selection-end-column="4" />
+        <state relative-caret-position="503">
+          <caret line="62" column="31" selection-start-line="62" selection-start-column="31" selection-end-line="62" selection-end-column="31" />
           <folding>
             <element signature="n#!!doc" />
+            <element signature="e#1133#1143#0" expanded="true" />
           </folding>
         </state>
       </provider>
