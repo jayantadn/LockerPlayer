@@ -168,8 +168,10 @@ def init():
 		print("[WARNING] Configured movie splitter does not exist")
 
 
-def play_file(idxMovie):
-	"""play the movie and update playcount"""
+def play_file(rel_path):
+	"""play the movie and update stats"""
+
+	idxMovie = db.getIdx(rel_path)
 
 	playcount = int(db.arrMovies[idxMovie]["playcount"]) + 1
 	db.update(db.arrMovies[idxMovie]["rel_path"], "playcount", playcount)
@@ -228,7 +230,7 @@ def play_random() :
 
 			choice = input( "1. Play\t 2. Retry\t 0. Main menu \nEnter your choice: ")
 			if choice == "1":
-				play_file(idx)
+				play_file(db.arrMovies[idx]["rel_path"])
 
 			elif choice == "2":
 				continue

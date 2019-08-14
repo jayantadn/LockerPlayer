@@ -116,6 +116,12 @@ class DB:
 				flg_exist = True
 		return flg_exist
 
+	def getIdx(self, rel_path) :
+		"""Get the idx of the given movie"""
+		for idx, data in enumerate(self.arrMovies):
+			if data["rel_path"] == rel_path:
+				return idx
+
 	def cleanup(self):
 		"""remove the invalid entries"""
 		for movie in self.arrMovies:
