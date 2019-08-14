@@ -38,87 +38,87 @@ from const import *
 # in future title is probably best, if we can find a way to preserve stats if a file is moved to different folder
 
 class DB:
-    """database class"""
-    # contructor
-    def __init__(self):
-        self.arrMovies = []
-        if not os.path.exists(DBDIR):
-            fo = open(DBDIR, "w")
-            fo.close()
-        else:
-            fo = open(DBDIR, "r")
-            contents = fo.read()
-            if not len(contents) == 0:
-                self.arrMovies = json.loads(contents)
-            fo.close()
+	"""database class"""
+	# contructor
+	def __init__(self):
+		self.arrMovies = []
+		if not os.path.exists(DBDIR):
+			fo = open(DBDIR, "w")
+			fo.close()
+		else:
+			fo = open(DBDIR, "r")
+			contents = fo.read()
+			if not len(contents) == 0:
+				self.arrMovies = json.loads(contents)
+			fo.close()
 
-    def save(self):
-        """save database from to disk"""
-        fo = open(DBDIR, "w")
-        fo.write(json.dumps(self.arrMovies, indent=4))
-        fo.close()
+	def save(self):
+		"""save database from to disk"""
+		fo = open(DBDIR, "w")
+		fo.write(json.dumps(self.arrMovies, indent=4))
+		fo.close()
 
-    def add(self, rel_path):
-        """add a new movie to database"""
-        print("Adding to database: ", rel_path)
-        entry = {
-            "rel_path": rel_path,
-            "timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
-            "is_valid": True,
-            "rating": None,
-            "playcount": 0,
-            "actor": rel_path.split("\\")[1],
-            "category": "Straight",
-            "delete": False,
-            "split": False,
-            "note": None
-        }
-        self.arrMovies.append(entry)
-        self.save()
+	def add(self, rel_path):
+		"""add a new movie to database"""
+		print("Adding to database: ", rel_path)
+		entry = {
+			"rel_path": rel_path,
+			"timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
+			"is_valid": True,
+			"rating": None,
+			"playcount": 0,
+			"actor": rel_path.split("\\")[1],
+			"category": "Straight",
+			"delete": False,
+			"split": False,
+			"note": None
+		}
+		self.arrMovies.append(entry)
+		self.save()
 
-    def remove(self, rel_path):
-        """remove a movie from database"""
+	def remove(self, rel_path):
+		"""remove a movie from database"""
 
-        # strategy: delete movie command from user will set the delete flag.
-        # during fix_movie_folder(), the movie will be deleted from the actual filesystem.
-        # then, the is_valid flag will be reset.
-        # during refresh_db() the invalid flags will be removed from database
+		# strategy: delete movie command from user will set the delete flag.
+		# during fix_movie_folder(), the movie will be deleted from the actual filesystem.
+		# then, the is_valid flag will be reset.
+		# during refresh_db() the invalid flags will be removed from database
 
-        for idx, data in enumerate(self.arrMovies):
-            if data["rel_path"] == rel_path:
-                print("Removing from database: ", rel_path)
-                self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-                self.arrMovies[idx]["is_valid"] = False
-                self.save()
-                break
+		for idx, data in enumerate(self.arrMovies):
+			if data["rel_path"] == rel_path:
+				print("Removing from database: ", rel_path)
+				self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+				self.arrMovies[idx]["is_valid"] = False
+				self.save()
+				break
 
-    def update(self, rel_path, key, val):
-        """update attributes for a movie"""
-        for idx, data in enumerate(self.arrMovies):
-            if data["rel_path"] == rel_path:
-                print("Updating ", key, "to ", val, "for ", rel_path)
-                self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-                if key in ("rating", "playcount"):
-                    self.arrMovies[idx][key] = int(val)
-                elif key in ("is_valid", "delete", "split"):
-                    if not val in (True, False):
-                        print("ERROR: ", key, " can only have the value True or False")
-                else:
-                    self.arrMovies[idx][key] = val
-                self.save()
-                break
+	def update(self, rel_path, key, val):
+		"""update attributes for a movie"""
+		for idx, data in enumerate(self.arrMovies):
+			if data["rel_path"] == rel_path:
+				print("Updating ", key, "to ", val, "for ", rel_path)
+				self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+				if key in ("rating", "playcount"):
+					self.arrMovies[idx][key] = int(val)
+				elif key in ("is_valid", "delete", "split"):
+					if not val in (True, False):
+						print("ERROR: ", key, " can only have the value True or False")
+				else:
+					self.arrMovies[idx][key] = val
+				self.save()
+				break
 
-    def exists(self, rel_path):
-        """check if a movie exist in database"""
-        flg_exist = False
-        for data in self.arrMovies:
-            if data["rel_path"] == rel_path:
-                flg_exist = True
-        return flg_exist
+	def exists(self, rel_path):
+		"""check if a movie exist in database"""
+		flg_exist = False
+		for data in self.arrMovies:
+			if data["rel_path"] == rel_path:
+				flg_exist = True
+		return flg_exist
 
-    def cleanup(self):
-        """remove the invalid entries"""
-        for movie in self.arrMovies:
-            if not movie["is_valid"]:
-                print("Removing from database: ", movie["rel_path"])
-                self.arrMovies.remove(movie)
+	def cleanup(self):
+		"""remove the invalid entries"""
+		for movie in self.arrMovies:
+			if not movie["is_valid"]:
+				print("Removing from database: ", movie["rel_path"])
+				self.arrMovies.remove(movie)

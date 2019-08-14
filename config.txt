@@ -1,4 +1,4 @@
 MOVIEDIR=L:\Huawei\CustomRom\Stock\.Locker
-PLAYER=T:\ProgramFiles\GOMPlayer\GOM.exe 
+PLAYER=T:\ProgramFiles\PotPlayerPortable\PotPlayerPortable.exe
 SPLITTER=T:\ProgramFiles\AvidemuxPortable\AvidemuxPortable.exe
 NEWLINE=DO NOT REMOVE THIS LINE
