@@ -208,6 +208,14 @@ def play_actor(actor=None) :
 		input("\nPress <enter> to continue ...")
 
 
+def play_unrated() :
+	"""Play an unrated movie"""
+	arrMovies = []
+	for movie in db.arrMovies :
+		if movie["rating"] is None :
+			arrMovies.append(movie)
+	play_random(arrMovies)
+
 def play_file(rel_path):
 	"""play the movie and update stats"""
 
@@ -331,6 +339,7 @@ def show_menu():
 	"""show the main menu"""
 	menu_main = ConsoleMenu("Main menu")
 	menu_main.append_item( FunctionItem("Play a random file", play_random) )
+	menu_main.append_item( FunctionItem("Play unrated movie", play_unrated) )
 	menu_main.append_item( FunctionItem("Play by actor", play_actor) )
 
 	menu_other = ConsoleMenu("Other options")
