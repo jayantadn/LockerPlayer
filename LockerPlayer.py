@@ -31,6 +31,7 @@ from consolemenu import *
 from consolemenu.items import *
 import traceback
 from send2trash import send2trash
+import getpass
 
 # import internal modules
 from const import *
@@ -193,7 +194,7 @@ def init():
 
 	# run the script only with a password
 	while True:
-		passwd = input("Enter password: ")
+		passwd = getpass.getpass()
 		if not passwd == "passwd":
 			print("Invalid password. Try again.")
 		else:
