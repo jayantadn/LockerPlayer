@@ -49,7 +49,7 @@ def copy_hi_movies():
 
 		# user inputs
 		destdir = input( "Enter destination: " )
-		rating = input( "Enter the minimum rating to copy: ")
+		rating = input( "Enter the minimum rating: ")
 		if not os.path.isdir(destdir) :
 			print( "Please enter a valid path" ); input();	return
 
@@ -208,6 +208,16 @@ def play_actor(actor=None) :
 		input("\nPress <enter> to continue ...")
 
 
+def play_rated() :
+	"""Play a high rated movie"""
+	rating = int( input("Enter the minimum rating: ") )
+	arrMovies = []
+	for movie in db.arrMovies :
+		if movie["rating"] is not None and movie["rating"] >= rating :
+			arrMovies.append(movie)
+	play_random(arrMovies)
+
+
 def play_unrated() :
 	"""Play an unrated movie"""
 	arrMovies = []
@@ -340,6 +350,7 @@ def show_menu():
 	menu_main = ConsoleMenu("Main menu")
 	menu_main.append_item( FunctionItem("Play a random file", play_random) )
 	menu_main.append_item( FunctionItem("Play unrated movie", play_unrated) )
+	menu_main.append_item( FunctionItem("Play a high rated movie", play_rated) )
 	menu_main.append_item( FunctionItem("Play by actor", play_actor) )
 
 	menu_other = ConsoleMenu("Other options")
