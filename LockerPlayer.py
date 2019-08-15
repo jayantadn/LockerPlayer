@@ -72,6 +72,11 @@ def copy_hi_movies():
 	input("\nPress <enter> to continue...")
 
 
+def delete_movie(rel_path) :
+	send2trash(os.path.join(CONFIG["MOVIEDIR"], rel_path))
+	db.remove(rel_path)
+
+
 def fix_movie_folder():
 	"""fix problems in the movie folder"""
 
@@ -88,16 +93,24 @@ def fix_movie_folder():
 		# Any other parent folder is very likely manually created.
 
 		# traverse through movie folder and check if all filenames are valid
-		for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
+		arrDelete = []
+		for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]) :
 			for file in files:
 				path = os.path.join(root, file)
 				try:
-					print("checking filename: ", path)
+					# invalid filename will throw exception
+					# print("checking filename: ", path)
+
+					# mark non movie files for delete
+					ext = os.path.splitext(path)[1]
+					if ext not in EXTLIST:
+						arrDelete.append(path)
+
 				except UnicodeEncodeError:
 					arr_filename_errors.append(root)
 
 		# display the filename and dirname errors
-		if not len(arr_filename_errors) == 0:
+		if len(arr_filename_errors) != 0 :
 			print("[WARNING] Invalid file or folder name found under:")
 			for pardir in arr_filename_errors:
 				try:
@@ -113,6 +126,15 @@ def fix_movie_folder():
 			if fix in ('F', 'f'):
 				print("Filenames are assumed fixed. Refreshing database again")
 				refresh_db()
+
+		# delete the non movie files
+		elif len(arrDelete) > 0 :
+			for path in arrDelete :
+				rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
+				delete_movie(rel_path)
+
+		else :
+			print( "\nNo errors found" )
 
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
@@ -268,8 +290,7 @@ def play_file(rel_path):
 	elif post_play == "4":	# delete movie
 		delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
 		if delete == "1":
-			send2trash( os.path.join( CONFIG["MOVIEDIR"], rel_path ) )
-			db.remove( rel_path )
+			delete_movie(rel_path)
 
 	elif post_play == "5":  # delete actor
 		actor = db.arrMovies[idxMovie]["actor"]
@@ -281,8 +302,7 @@ def play_file(rel_path):
 				if movie["actor"] == actor :
 					arrDelete.append(movie["rel_path"])
 			for rel_path in arrDelete :
-				send2trash( os.path.join(CONFIG["MOVIEDIR"], rel_path) )
-				db.remove( rel_path )
+				delete_movie(rel_path)
 
 	elif post_play == "0":
 		return
@@ -349,20 +369,26 @@ def refresh_db():
 	try:
 
 		# check for non-existent entries in database
+		arrDelete = []
 		for movie in db.arrMovies:
 			full_path = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
 			if not os.path.exists(full_path):
-				db.remove(movie["rel_path"])
+				arrDelete.append(movie["rel_path"])
+		if len(arrDelete) > 0 :
+			print( "The following files will be removed from database.")
+			print( "Please verify whether they actually exist in the filesystem")
+			for rel_path in arrDelete :
+				print(rel_path)
+			delete = input("Are you sure to delete them?\n 1. Yes\t 2. No ")
+			if delete == "1" :
+				for rel_path in arrDelete :
+					delete_movie(rel_path)
 
 		# add any new files
 		for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
 			for file in files:
-				# check for file extension
-				ext = os.path.splitext(file)[1]
-				if ext not in EXTLIST:
-					continue
-
 				# add to database if not exist already
+				# assuming non-movie files are already deleted
 				path = os.path.join(root, file)
 				rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
 				if not db.exists(rel_path):
@@ -372,6 +398,7 @@ def refresh_db():
 	except:
 		traceback.print_exc()
 
+	print( "\nDatabase refresh completed." )
 	input("\nPress <enter> to continue...")
 
 
@@ -384,8 +411,8 @@ def show_menu():
 	menu_main.append_item( FunctionItem("Play by actor", play_actor) )
 
 	menu_other = ConsoleMenu("Other options")
-	menu_other.append_item(FunctionItem("Refresh database", refresh_db))
 	menu_other.append_item(FunctionItem("Fix movie folder", fix_movie_folder))
+	menu_other.append_item(FunctionItem("Refresh database", refresh_db))
 	menu_other.append_item(FunctionItem("Show statistics", show_stats))
 	menu_other.append_item(FunctionItem("Copy high rated movies", copy_hi_movies))
 
