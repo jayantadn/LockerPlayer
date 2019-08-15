@@ -96,15 +96,22 @@ class DB:
 		"""update attributes for a movie"""
 		for idx, data in enumerate(self.arrMovies):
 			if data["rel_path"] == rel_path:
+				# its not very clear whether db library should do any validations
+				# will wait and see what is better
+				assert key in self.arrMovies[idx], "Invalid key"
+
+				# formatting the value
+				if key in ("rating", "playcount"):
+					val = int(val)
+				elif key in ("is_valid", "delete", "split"):
+					if val is True or val == "True" :
+						val = True
+					else :
+						val = False
+
 				print("Updating ", key, "to ", val, "for ", rel_path)
 				self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-				if key in ("rating", "playcount"):
-					self.arrMovies[idx][key] = int(val)
-				elif key in ("is_valid", "delete", "split"):
-					if not val in (True, False):
-						print("ERROR: ", key, " can only have the value True or False")
-				else:
-					self.arrMovies[idx][key] = val
+				self.arrMovies[idx][key] = val
 				self.save()
 				break
 

@@ -188,10 +188,10 @@ def play_actor(actor=None) :
 			else :
 				for i, actor in enumerate(arrActor) :
 					print( i, actor)
-				print( i+1, "Exit" )
+				print( i+1, "Go back" )
 				i = int( input( "Please select an actor: " ) )
 				assert 0 <= i <= len(arrActor), "Invalid input"
-				if i == len(arrActor) : return # Exit
+				if i == len(arrActor) : return # Go back
 				actor = arrActor[i]
 
 		# create array of movies by actor. give movie array to randomize
@@ -239,7 +239,8 @@ def play_file(rel_path):
 
 	# post play menu
 	post_play = input(
-		"1. Rate\t 2. Repeat actor\t 3. Delete\t 0. Go back \nEnter your choice: ")
+		"1. Rate\t 2. Repeat actor\t 3. Update stats\t 4. Delete\t "
+		"0. Go back \nEnter your choice: ")
 
 	if post_play == "1":
 		rating = input("Enter your rating: ")
@@ -249,6 +250,17 @@ def play_file(rel_path):
 		play_actor( db.arrMovies[idxMovie]["actor"] )
 
 	elif post_play == "3":
+		print( "Current stats:" )
+		for key, val in db.arrMovies[idxMovie].items() :
+			if key != "rel_path":
+				print( key.ljust(10), val )
+		print( "0".ljust(10), "Go back" )
+		key = input( "Which field do you want to update: " )
+		if key != "0" :
+			val = input( "Please enter new value: " )
+			db.update( rel_path, key, val )
+
+	elif post_play == "4":
 		delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
 		if delete == "1":
 			db.update(db.arrMovies[idxMovie]["rel_path"], "delete", True)
