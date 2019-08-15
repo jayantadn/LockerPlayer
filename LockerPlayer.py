@@ -67,9 +67,8 @@ def copy_hi_movies():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("\nException occurred. Press <enter> to continue...")
-	else:
-		input("\nAll files are copied. Press <enter> to continue...")
+
+	input("\nPress <enter> to continue...")
 
 
 def fix_movie_folder():
@@ -116,9 +115,8 @@ def fix_movie_folder():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("\nException occurred. Press <enter> to continue...")
-	else:
-		input("\nMovie folder is fixed. Press <enter> to continue...")
+
+	input("\nPress <enter> to continue...")
 
 
 def init():
@@ -168,10 +166,47 @@ def init():
 		print("[WARNING] Configured movie splitter does not exist")
 
 
+def play_actor(actor=None) :
+	"""Play movies for a given actor. If no actor specified, prompt for one."""
+	try:
+
+		# if no actor is specified, prompt for the actor name.
+		# partial match is ok. list all actors matching the name.
+		if actor is None :
+			actor = input( "Actor name: " )
+			arrActor = []
+			for movie in db.arrMovies:
+				if actor in movie["actor"] and movie["actor"] not in arrActor:
+					arrActor.append( movie["actor"] )
+
+			# If no match, throw error
+			# if single match, then trouble free
+			# if multiple match, then prompt to select one
+			assert len(arrActor) != 0, "No such actor found"
+			if len(arrActor) == 1 :
+				actor = arrActor[0]
+			else :
+				for i, actor in enumerate(arrActor) :
+					print( i, actor)
+				print( i+1, "Exit" )
+				i = int( input( "Please select an actor: " ) )
+				assert 0 <= i <= len(arrActor), "Invalid input"
+				if i == len(arrActor) : return # Exit
+				actor = arrActor[i]
+
+		print( "Selected actor is:", actor )
+
+	# forced to use bare except because consolemenu is not showing any exception
+	except:
+		traceback.print_exc()
+
+	input("\nPress <enter> to continue ...")
+
+
 def play_file(rel_path):
 	"""play the movie and update stats"""
 
-	idxMovie = db.getIdx(rel_path)
+	idxMovie = db.getIdxMovie(rel_path)
 
 	playcount = int(db.arrMovies[idxMovie]["playcount"]) + 1
 	db.update(db.arrMovies[idxMovie]["rel_path"], "playcount", playcount)
@@ -245,9 +280,8 @@ def play_random() :
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("\nException occurred. Press <enter> to continue...")
-	else:
-		input("\nPress <enter> to continue ...")
+
+	input("\nPress <enter> to continue...")
 
 
 def refresh_db():
@@ -280,16 +314,15 @@ def refresh_db():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("\nException occurred. Press <enter> to continue...")
-	else:
-		input("\nDatabase refreshed. Press <enter> to continue...")
+
+	input("\nPress <enter> to continue...")
 
 
 def show_menu():
 	"""show the main menu"""
 	menu_main = ConsoleMenu("Main menu")
-	item_play_file = FunctionItem("Play a random file", play_random)
-	menu_main.append_item(item_play_file)
+	menu_main.append_item( FunctionItem("Play a random file", play_random) )
+	menu_main.append_item( FunctionItem("Play by actor", play_actor) )
 
 	menu_other = ConsoleMenu("Other options")
 	menu_other.append_item(FunctionItem("Refresh database", refresh_db))
@@ -318,9 +351,8 @@ def show_stats():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-		input("\nException occurred. Press <enter> to continue...")
-	else:
-		input("\nPress <enter> to continue...")
+
+	input("\nPress <enter> to continue...")
 
 
 def main():
