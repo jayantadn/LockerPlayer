@@ -221,13 +221,16 @@ def play_file(rel_path):
 
 	# post play menu
 	post_play = input(
-		"1. Rate\t 2. Delete\t 0. Go back \nEnter your choice: ")
+		"1. Rate\t 2. Repeat actor\t 3. Delete\t 0. Go back \nEnter your choice: ")
 
 	if post_play == "1":
 		rating = input("Enter your rating: ")
 		db.update(db.arrMovies[idxMovie]["rel_path"], "rating", rating)
 
 	elif post_play == "2":
+		play_actor( db.arrMovies[idxMovie]["actor"] )
+
+	elif post_play == "3":
 		delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
 		if delete == "1":
 			db.update(db.arrMovies[idxMovie]["rel_path"], "delete", True)
@@ -269,7 +272,7 @@ def play_random(arrMovies = db.arrMovies) :
 				print("Total movies of this actor: ", cnt_movies)
 				print("Movies played of this actor: ", cnt_played)
 
-			choice = input( "1. Play\t 2. Retry\t 0. Main menu \nEnter your choice: ")
+			choice = input( "1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
 			if choice == "1":
 				play_file(arrMovies[idx]["rel_path"])
 
