@@ -83,7 +83,6 @@ def fix_movie_folder():
 
 	# strategy: fix movie folder should only fix problems in the movie folder.
 	# It should not touch the database.
-	# However, its always best to refresh the database immediately afterwards
 
 	try:
 		# local variables
@@ -184,9 +183,7 @@ def fix_movie_folder():
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-
-	print( "Finished fixing movie folder. Advise to refresh database next" )
-	input("\nPress <enter> to continue...")
+		input("\nPress <enter> to continue...")
 
 
 def init():
@@ -415,6 +412,8 @@ def refresh_db():
 	# strategy: refresh_db should only modify the database.
 	# It should not touch the movie folder.
 
+	fix_movie_folder()
+
 	try:
 
 		# change actor names to title case
@@ -469,7 +468,6 @@ def show_menu():
 	menu_main.append_item( FunctionItem("Play by actor", play_actor) )
 
 	menu_other = ConsoleMenu("Other options")
-	menu_other.append_item(FunctionItem("Fix movie folder", fix_movie_folder))
 	menu_other.append_item(FunctionItem("Refresh database", refresh_db))
 	menu_other.append_item(FunctionItem("Show statistics", show_stats))
 	menu_other.append_item(FunctionItem("Copy high rated movies", copy_hi_movies))
