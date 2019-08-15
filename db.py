@@ -127,10 +127,3 @@ class DB:
 		for idx, data in enumerate(self.arrMovies):
 			if data["rel_path"] == rel_path:
 				return idx
-
-	def cleanup(self):
-		"""remove the invalid entries"""
-		for movie in self.arrMovies:
-			if not movie["is_valid"]:
-				print("Removing from database: ", movie["rel_path"])
-				self.arrMovies.remove(movie)

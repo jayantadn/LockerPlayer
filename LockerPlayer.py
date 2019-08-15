@@ -346,8 +346,6 @@ def refresh_db():
 	"""traverse movie folder and update the database"""
 
 	try:
-		# remove any invalid entries
-		db.cleanup()
 
 		# check for non-existent entries in database
 		for movie in db.arrMovies:
