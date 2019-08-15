@@ -243,8 +243,8 @@ def play_file(rel_path):
 
 	# post play menu
 	post_play = input(
-		"1. Rate\t 2. Repeat actor\t 3. Update stats\t 4. Delete movie\t "
-		"5. Delete actor\t 0. Go back \nEnter your choice: ")
+		"1. Rate  2. Repeat actor  3. Update stats  4. Delete movie  "
+		"5. Delete actor  0. Go back \nEnter your choice: ")
 
 	if post_play == "1":	# rating
 		rating = input("Enter your rating: ")
@@ -269,6 +269,19 @@ def play_file(rel_path):
 		if delete == "1":
 			send2trash( os.path.join( CONFIG["MOVIEDIR"], rel_path ) )
 			db.remove( rel_path )
+
+	elif post_play == "5":  # delete actor
+		actor = db.arrMovies[idxMovie]["actor"]
+		print( "Are you sure to delete all movies of", actor, "?" )
+		delete = input( "1. Yes\t 2. No " )
+		if delete == "1" :
+			arrDelete = []
+			for movie in db.arrMovies :
+				if movie["actor"] == actor :
+					arrDelete.append(movie["rel_path"])
+			for rel_path in arrDelete :
+				send2trash( os.path.join(CONFIG["MOVIEDIR"], rel_path) )
+				db.remove( rel_path )
 
 	elif post_play == "0":
 		return
