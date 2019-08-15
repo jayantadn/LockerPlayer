@@ -60,13 +60,27 @@ class DB:
 
 	def add(self, rel_path):
 		"""add a new movie to database"""
+
 		print("Adding to database:", rel_path)
+
+		# finding the actor name. Its basically the second folder from rel_path
+		folder1 = None
+		folder2 = None
+		head = rel_path
+		while True:
+			head, tail = os.path.split(head)
+			folder2 = folder1
+			folder1 = tail
+			if len(head) == 0 : break
+		actor = folder2
+
+		# create the entry
 		entry = {
 			"rel_path": rel_path,
 			"timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
 			"rating": None,
 			"playcount": 0,
-			"actor": rel_path.split("\\")[1],
+			"actor": actor,
 			"category": "Straight",
 		}
 		self.arrMovies.append(entry)
