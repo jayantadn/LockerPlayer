@@ -194,7 +194,12 @@ def play_actor(actor=None) :
 				if i == len(arrActor) : return # Exit
 				actor = arrActor[i]
 
-		print( "Selected actor is:", actor )
+		# create array of movies by actor
+		arrMovies = []
+		for movie in db.arrMovies:
+			if actor == movie["actor"] :
+				arrMovies.append(movie)
+		assert len(arrMovies) != 0, "No movies found"
 
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
@@ -357,7 +362,6 @@ def show_stats():
 
 def main():
 	"""program entry point"""
-
 	init()
 	show_menu()
 
