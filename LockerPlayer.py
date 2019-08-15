@@ -194,18 +194,18 @@ def play_actor(actor=None) :
 				if i == len(arrActor) : return # Exit
 				actor = arrActor[i]
 
-		# create array of movies by actor
+		# create array of movies by actor. give movie array to randomize
 		arrMovies = []
 		for movie in db.arrMovies:
 			if actor == movie["actor"] :
 				arrMovies.append(movie)
 		assert len(arrMovies) != 0, "No movies found"
+		play_random(arrMovies)
 
 	# forced to use bare except because consolemenu is not showing any exception
 	except:
 		traceback.print_exc()
-
-	input("\nPress <enter> to continue ...")
+		input("\nPress <enter> to continue ...")
 
 
 def play_file(rel_path):
@@ -240,28 +240,29 @@ def play_file(rel_path):
 		return
 
 
-def play_random() :
+def play_random(arrMovies = db.arrMovies) :
 	try:
-		assert len(db.arrMovies) > 0, \
+
+		assert len(arrMovies) > 0, \
 			"[ERROR] No movies found"
 
 		while True:
 			# get a random file
-			idx = random.randrange(0, len(db.arrMovies), 1)
+			idx = random.randrange(0, len(arrMovies), 1)
 
 			# print stats for the file
 			print("\nWe found the following movie for you:")
-			print("actor = ", db.arrMovies[idx]["actor"])
-			print("title = ", os.path.basename(db.arrMovies[idx]["rel_path"]))
-			print("category = ", db.arrMovies[idx]["category"])
-			print("rating = ", db.arrMovies[idx]["rating"])
+			print("actor = ", arrMovies[idx]["actor"])
+			print("title = ", os.path.basename(arrMovies[idx]["rel_path"]))
+			print("category = ", arrMovies[idx]["category"])
+			print("rating = ", arrMovies[idx]["rating"])
 
 			# print stats for actor
-			actor = db.arrMovies[idx]["actor"]
+			actor = arrMovies[idx]["actor"]
 			if actor is not None and not actor == "Unknown":
 				cnt_movies = 0
 				cnt_played = 0
-				for movie in db.arrMovies:
+				for movie in arrMovies:
 					if movie["actor"] == actor:
 						cnt_movies += 1
 						cnt_played += int(movie["playcount"])
@@ -270,7 +271,7 @@ def play_random() :
 
 			choice = input( "1. Play\t 2. Retry\t 0. Main menu \nEnter your choice: ")
 			if choice == "1":
-				play_file(db.arrMovies[idx]["rel_path"])
+				play_file(arrMovies[idx]["rel_path"])
 
 			elif choice == "2":
 				continue

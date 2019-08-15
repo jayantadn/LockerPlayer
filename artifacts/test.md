@@ -3,5 +3,6 @@
 - Play random menu: Main menu
 - Play by actor
 - post play: rate
+- post play: replay actor
 - post play: delete
 - post play: Go back
