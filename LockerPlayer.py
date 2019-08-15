@@ -30,6 +30,7 @@ import json
 from consolemenu import *
 from consolemenu.items import *
 import traceback
+from send2trash import send2trash
 
 # import internal modules
 from const import *
@@ -226,8 +227,11 @@ def play_unrated() :
 			arrMovies.append(movie)
 	play_random(arrMovies)
 
+
 def play_file(rel_path):
 	"""play the movie and update stats"""
+
+	assert os.path.exists( os.path.join(CONFIG["MOVIEDIR"], rel_path) ), "File not found"
 
 	idxMovie = db.getIdxMovie(rel_path)
 
@@ -239,17 +243,17 @@ def play_file(rel_path):
 
 	# post play menu
 	post_play = input(
-		"1. Rate\t 2. Repeat actor\t 3. Update stats\t 4. Delete\t "
-		"0. Go back \nEnter your choice: ")
+		"1. Rate\t 2. Repeat actor\t 3. Update stats\t 4. Delete movie\t "
+		"5. Delete actor\t 0. Go back \nEnter your choice: ")
 
-	if post_play == "1":
+	if post_play == "1":	# rating
 		rating = input("Enter your rating: ")
 		db.update(db.arrMovies[idxMovie]["rel_path"], "rating", rating)
 
-	elif post_play == "2":
+	elif post_play == "2":	# repeat actor
 		play_actor( db.arrMovies[idxMovie]["actor"] )
 
-	elif post_play == "3":
+	elif post_play == "3":	# update stats
 		print( "Current stats:" )
 		for key, val in db.arrMovies[idxMovie].items() :
 			if key != "rel_path":
@@ -260,17 +264,19 @@ def play_file(rel_path):
 			val = input( "Please enter new value: " )
 			db.update( rel_path, key, val )
 
-	elif post_play == "4":
+	elif post_play == "4":	# delete movie
 		delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
 		if delete == "1":
-			db.update(db.arrMovies[idxMovie]["rel_path"], "delete", True)
+			send2trash( os.path.join( CONFIG["MOVIEDIR"], rel_path ) )
+			db.remove( rel_path )
 
 	elif post_play == "0":
 		return
 
 	else:
 		print("ERROR: Invalid choice")
-		return
+
+	input("\nPress <enter> to continue...")
 
 
 def play_random(arrMovies = db.arrMovies) :

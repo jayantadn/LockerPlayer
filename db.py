@@ -60,7 +60,7 @@ class DB:
 
 	def add(self, rel_path):
 		"""add a new movie to database"""
-		print("Adding to database: ", rel_path)
+		print("Adding to database:", rel_path)
 		entry = {
 			"rel_path": rel_path,
 			"timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
@@ -79,18 +79,17 @@ class DB:
 	def remove(self, rel_path):
 		"""remove a movie from database"""
 
-		# strategy: delete movie command from user will set the delete flag.
-		# during fix_movie_folder(), the movie will be deleted from the actual filesystem.
-		# then, the is_valid flag will be reset.
-		# during refresh_db() the invalid flags will be removed from database
+		# strategy: old strategy was to set a flag when a movie is deleted.
+		# later during cleanup, those files will be actually deleted.
+		# But its observed that the flag is often forgotten in different functions.
+		# So, decision is taken to delete the file directly.
+		# Also, remove the entry from database
+		# If new requirements come in future, we will think about then.
 
-		for idx, data in enumerate(self.arrMovies):
-			if data["rel_path"] == rel_path:
-				print("Removing from database: ", rel_path)
-				self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-				self.arrMovies[idx]["is_valid"] = False
-				self.save()
-				break
+		# delete the file from database
+		print( "Removing from database:", rel_path )
+		self.arrMovies.pop( self.getIdxMovie(rel_path) )
+		self.save()
 
 	def update(self, rel_path, key, val):
 		"""update attributes for a movie"""

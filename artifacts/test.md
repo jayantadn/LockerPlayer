@@ -5,5 +5,6 @@
 - post play: rate
 - post play: repeat actor
 - post play: update stats
-- post play: delete
+- post play: delete movie
+- post play: delete actor
 - post play: Go back
