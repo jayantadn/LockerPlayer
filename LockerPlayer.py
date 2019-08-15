@@ -80,11 +80,12 @@ def fix_movie_folder():
 		arr_filename_errors = []
 		arr_dirname_errors = []
 
-		# algorithm: try to print full path of all files. If some invalid characters are found in the filename,
-		# exception will be thrown. List the parent folder of such files. If parent folder name also has invalid characters,
-		# print the parent of parent.
-		# assumption: only movie name or movie folder names can have errors. Any other parent folder is very likely
-		# manually created.
+		# algorithm: try to print full path of all files. If some invalid
+		# characters are found in the filename, exception will be thrown.
+		# List the parent folder of such files. If parent folder name also has
+		# invalid characters, print the parent of parent.
+		# assumption: only movie name or movie folder names can have errors.
+		# Any other parent folder is very likely manually created.
 
 		# traverse through movie folder and check if all filenames are valid
 		for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):

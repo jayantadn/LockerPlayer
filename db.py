@@ -64,14 +64,10 @@ class DB:
 		entry = {
 			"rel_path": rel_path,
 			"timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
-			"is_valid": True,
 			"rating": None,
 			"playcount": 0,
 			"actor": rel_path.split("\\")[1],
 			"category": "Straight",
-			"delete": False,
-			"split": False,
-			"note": None
 		}
 		self.arrMovies.append(entry)
 		self.save()
@@ -102,11 +98,6 @@ class DB:
 				# formatting the value
 				if key in ("rating", "playcount"):
 					val = int(val)
-				elif key in ("is_valid", "delete", "split"):
-					if val is True or val == "True" :
-						val = True
-					else :
-						val = False
 
 				print("Updating ", key, "to ", val, "for ", rel_path)
 				self.arrMovies[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
