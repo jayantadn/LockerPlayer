@@ -416,6 +416,15 @@ def refresh_db():
 
 	try:
 
+		# change actor names to title case
+		for movie in db.arrMovies :
+			if movie["actor"] != movie["actor"].title() :
+				rel_path_new = movie["rel_path"].replace( movie["actor"],
+					movie["actor"].title(), 1 )
+				if os.path.exists( os.path.join(CONFIG["MOVIEDIR"], rel_path_new) ) :
+					db.update(movie["rel_path"], "rel_path", rel_path_new)
+					db.update(movie["rel_path"], "actor", movie["actor"].title())
+
 		# check for non-existent entries in database
 		arrDelete = []
 		for movie in db.arrMovies:
