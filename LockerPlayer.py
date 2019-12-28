@@ -428,7 +428,8 @@ def show_menu():
 
 	item_other = SubmenuItem("Other options", menu_other, menu_main)
 	menu_main.append_item(item_other)
-	menu_main.show()
+	menu_main.append_item(FunctionItem("Exit", exit))
+	menu_main.show(False)
 
 
 # noinspection SpellCheckingInspection
