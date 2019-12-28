@@ -26,9 +26,6 @@ import os
 import shutil
 import time
 import random
-import json
-from consolemenu import *
-from consolemenu.items import *
 import traceback
 from send2trash import send2trash
 import getpass
@@ -47,28 +44,22 @@ db = DB()
 def copy_hi_movies():
 	"""Copy high rated movies to another location"""
 
-	try:
+	# user inputs
+	destdir = input( "Enter destination: " )
+	rating = input( "Enter the minimum rating: ")
+	if not os.path.isdir(destdir) :
+		print( "Please enter a valid path" ); input();	return
 
-		# user inputs
-		destdir = input( "Enter destination: " )
-		rating = input( "Enter the minimum rating: ")
-		if not os.path.isdir(destdir) :
-			print( "Please enter a valid path" ); input();	return
-
-		# loop through the database and copy movies with high rating
-		for movie in db.arrMovies:
-			if movie["rating"] is not None and movie["rating"] >= int(rating):
-				src = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
-				dest = os.path.join(destdir, movie["rel_path"])
-				if not os.path.exists(os.path.dirname(dest)) :
-					os.makedirs(os.path.dirname(dest))
-				if not os.path.exists(dest):
-					print("Copying file:", movie["rel_path"])
-					shutil.copy2(src, dest)
-
-	# forced to use bare except because consolemenu is not showing any exception
-	except:
-		traceback.print_exc()
+	# loop through the database and copy movies with high rating
+	for movie in db.arrMovies:
+		if movie["rating"] is not None and movie["rating"] >= int(rating):
+			src = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
+			dest = os.path.join(destdir, movie["rel_path"])
+			if not os.path.exists(os.path.dirname(dest)) :
+				os.makedirs(os.path.dirname(dest))
+			if not os.path.exists(dest):
+				print("Copying file:", movie["rel_path"])
+				shutil.copy2(src, dest)
 
 	input("\nPress <enter> to continue...")
 
@@ -84,106 +75,100 @@ def fix_movie_folder():
 	# strategy: fix movie folder should only fix problems in the movie folder.
 	# It should not touch the database.
 
-	try:
-		# local variables
-		arr_filename_errors = []
-		arr_dirname_errors = []
+	# local variables
+	arr_filename_errors = []
+	arr_dirname_errors = []
 
-		# algorithm: try to print full path of all files. If some invalid
-		# characters are found in the filename, exception will be thrown.
-		# List the parent folder of such files. If parent folder name also has
-		# invalid characters, print the parent of parent.
-		# assumption: only movie name or movie folder names can have errors.
-		# Any other parent folder is very likely manually created.
+	# algorithm: try to print full path of all files. If some invalid
+	# characters are found in the filename, exception will be thrown.
+	# List the parent folder of such files. If parent folder name also has
+	# invalid characters, print the parent of parent.
+	# assumption: only movie name or movie folder names can have errors.
+	# Any other parent folder is very likely manually created.
 
-		# traverse through movie folder and check if all filenames are valid
-		arrDelete = []
-		arrCase = []
-		for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]) :
-			for file in files:
-				path = os.path.join(root, file)
-				try:
+	# traverse through movie folder and check if all filenames are valid
+	arrDelete = []
+	arrCase = []
+	for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]) :
+		for file in files:
+			path = os.path.join(root, file)
+			try:
 
-					# extract the relative path
-					rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
+				# extract the relative path
+				rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
 
-					# invalid filename will throw exception
-					# print("checking filename: ", path)
+				# invalid filename will throw exception
+				# print("checking filename: ", path)
 
-					# mark non movie files for delete
-					ext = os.path.splitext(path)[1]
-					if ext not in EXTLIST:
-						arrDelete.append(rel_path)
+				# mark non movie files for delete
+				ext = os.path.splitext(path)[1]
+				if ext not in EXTLIST:
+					arrDelete.append(rel_path)
 
-					# convert actor name to title case
-					folder1 = None
-					folder2 = None
-					head = path
-					while True :
-						head, tail = os.path.split(head)
-						folder2 = folder1
-						folder1 = tail
-						if head == CONFIG["MOVIEDIR"] : break
-					actor = folder2
-					if actor != actor.title() :
-						partpath = path[: path.find(actor) + len(actor) ]
-						if partpath not in arrCase :
-							arrCase.append(partpath)
+				# convert actor name to title case
+				folder1 = None
+				folder2 = None
+				head = path
+				while True :
+					head, tail = os.path.split(head)
+					folder2 = folder1
+					folder1 = tail
+					if head == CONFIG["MOVIEDIR"] : break
+				actor = folder2
+				if actor != actor.title() :
+					partpath = path[: path.find(actor) + len(actor) ]
+					if partpath not in arrCase :
+						arrCase.append(partpath)
 
-				except UnicodeEncodeError:
-					arr_filename_errors.append(root)
+			except UnicodeEncodeError:
+				arr_filename_errors.append(root)
 
-		# display the filename and dirname errors
-		if len(arr_filename_errors) > 0 :
-			print("[WARNING] Invalid file or folder name found under:")
-			for pardir in arr_filename_errors:
-				try:
-					print(pardir)
-				except UnicodeEncodeError:
-					arr_dirname_errors.append(pardir)
-			for pardir in arr_dirname_errors:
-				try:
-					print(os.path.dirname(pardir))
-				except UnicodeEncodeError:
-					print("[WARNING] Invalid names found in some unidentified folders")
-			fix = input("Please fix the filenames manually. [F]ixed, [S]kip ")
+	# display the filename and dirname errors
+	if len(arr_filename_errors) > 0 :
+		print("[WARNING] Invalid file or folder name found under:")
+		for pardir in arr_filename_errors:
+			try:
+				print(pardir)
+			except UnicodeEncodeError:
+				arr_dirname_errors.append(pardir)
+		for pardir in arr_dirname_errors:
+			try:
+				print(os.path.dirname(pardir))
+			except UnicodeEncodeError:
+				print("[WARNING] Invalid names found in some unidentified folders")
+		fix = input("Please fix the filenames manually. [F]ixed, [S]kip ")
 
-		# delete the non movie files
-		elif len(arrDelete) > 0 :
-			for rel_path in arrDelete :
-				# if database was updated before fixing the movie folder,
-				# this api will delete the movie from database also.
-				# Although its expected that fix and rebuild_db should be
-				# independent of each other.
-				delete_movie(rel_path)
+	# delete the non movie files
+	elif len(arrDelete) > 0 :
+		for rel_path in arrDelete :
+			# if database was updated before fixing the movie folder,
+			# this api will delete the movie from database also.
+			# Although its expected that fix and rebuild_db should be
+			# independent of each other.
+			delete_movie(rel_path)
 
-		# change actor names to title case
-		elif len(arrCase) > 0 :
-			print( "The following path need to be changed to title case:")
-			for partpath in arrCase : print(partpath)
-			cont = input( "Do you want to continue?\n 1. Yes\t 2. No ")
-			if cont == "1" :
-				# renaming first with _ suffix as windows does not allow
-				# case change in filename
-				for partpath in arrCase:
-					src = partpath
-					head, tail = os.path.split(partpath)
-					dest = os.path.join( head, tail.title() )
+	# change actor names to title case
+	elif len(arrCase) > 0 :
+		print( "The following path need to be changed to title case:")
+		for partpath in arrCase : print(partpath)
+		cont = input( "Do you want to continue?\n 1. Yes\t 2. No ")
+		if cont == "1" :
+			# renaming first with _ suffix as windows does not allow
+			# case change in filename
+			for partpath in arrCase:
+				src = partpath
+				head, tail = os.path.split(partpath)
+				dest = os.path.join( head, tail.title() )
 
-					os.rename( src, dest + "_" )
-					time.sleep(1)
-				for partpath in arrCase:
-					head, tail = os.path.split(partpath)
-					src = os.path.join( head, tail.title() + "_" )
-					os.rename( src, src[:-1] )
+				os.rename( src, dest + "_" )
+				time.sleep(1)
+			for partpath in arrCase:
+				head, tail = os.path.split(partpath)
+				src = os.path.join( head, tail.title() + "_" )
+				os.rename( src, src[:-1] )
 
-		else :
-			print( "\nNo errors found" )
-
-	# forced to use bare except because consolemenu is not showing any exception
-	except:
-		traceback.print_exc()
-		input("\nPress <enter> to continue...")
+	else :
+		print( "\nNo errors found" )
 
 
 def init():
@@ -235,44 +220,38 @@ def init():
 
 def play_actor(actor=None) :
 	"""Play movies for a given actor. If no actor specified, prompt for one."""
-	try:
 
-		# if no actor is specified, prompt for the actor name.
-		# partial match is ok. list all actors matching the name.
-		if actor is None :
-			actor = input( "Actor name: " )
-			arrActor = []
-			for movie in db.arrMovies:
-				if actor in movie["actor"] and movie["actor"] not in arrActor:
-					arrActor.append( movie["actor"] )
-
-			# If no match, throw error
-			# if single match, then trouble free
-			# if multiple match, then prompt to select one
-			assert len(arrActor) != 0, "No such actor found"
-			if len(arrActor) == 1 :
-				actor = arrActor[0]
-			else :
-				for i, actor in enumerate(arrActor) :
-					print( i, actor)
-				print( i+1, "Go back" )
-				i = int( input( "Please select an actor: " ) )
-				assert 0 <= i <= len(arrActor), "Invalid input"
-				if i == len(arrActor) : return # Go back
-				actor = arrActor[i]
-
-		# create array of movies by actor. give movie array to randomize
-		arrMovies = []
+	# if no actor is specified, prompt for the actor name.
+	# partial match is ok. list all actors matching the name.
+	if actor is None :
+		actor = input( "Actor name: " )
+		arrActor = []
 		for movie in db.arrMovies:
-			if actor == movie["actor"] :
-				arrMovies.append(movie)
-		assert len(arrMovies) != 0, "No movies found"
-		play_random(arrMovies)
+			if actor in movie["actor"] and movie["actor"] not in arrActor:
+				arrActor.append( movie["actor"] )
 
-	# forced to use bare except because consolemenu is not showing any exception
-	except:
-		traceback.print_exc()
-		input("\nPress <enter> to continue ...")
+		# If no match, throw error
+		# if single match, then trouble free
+		# if multiple match, then prompt to select one
+		assert len(arrActor) != 0, "No such actor found"
+		if len(arrActor) == 1 :
+			actor = arrActor[0]
+		else :
+			for i, actor in enumerate(arrActor) :
+				print( i, actor)
+			print( i+1, "Go back" )
+			i = int( input( "Please select an actor: " ) )
+			assert 0 <= i <= len(arrActor), "Invalid input"
+			if i == len(arrActor) : return # Go back
+			actor = arrActor[i]
+
+	# create array of movies by actor. give movie array to randomize
+	arrMovies = []
+	for movie in db.arrMovies:
+		if actor == movie["actor"] :
+			arrMovies.append(movie)
+	assert len(arrMovies) != 0, "No movies found"
+	play_random(arrMovies)
 
 
 def play_rated() :
@@ -311,51 +290,46 @@ def play_file(rel_path):
 		show_menu_postplay(rel_path)
 
 def play_random(arrMovies = db.arrMovies) :
-	try:
+	assert len(arrMovies) > 0, \
+		"[ERROR] No movies found"
 
-		assert len(arrMovies) > 0, \
-			"[ERROR] No movies found"
+	while True:
+		# get a random file
+		idx = random.randrange(0, len(arrMovies), 1)
 
-		while True:
-			# get a random file
-			idx = random.randrange(0, len(arrMovies), 1)
+		# print stats for the file
+		print("\nWe found the following movie for you:")
+		print("actor = ", arrMovies[idx]["actor"])
+		print("title = ", os.path.basename(arrMovies[idx]["rel_path"]))
+		print("category = ", arrMovies[idx]["category"])
+		print("rating = ", arrMovies[idx]["rating"])
 
-			# print stats for the file
-			print("\nWe found the following movie for you:")
-			print("actor = ", arrMovies[idx]["actor"])
-			print("title = ", os.path.basename(arrMovies[idx]["rel_path"]))
-			print("category = ", arrMovies[idx]["category"])
-			print("rating = ", arrMovies[idx]["rating"])
+		# print stats for actor
+		actor = arrMovies[idx]["actor"]
+		if actor is not None and not actor == "Unknown":
+			cnt_movies = 0
+			cnt_played = 0
+			for movie in arrMovies:
+				if movie["actor"] == actor:
+					cnt_movies += 1
+					cnt_played += int(movie["playcount"])
+			print("Total movies of this actor: ", cnt_movies)
+			print("Movies played of this actor: ", cnt_played)
 
-			# print stats for actor
-			actor = arrMovies[idx]["actor"]
-			if actor is not None and not actor == "Unknown":
-				cnt_movies = 0
-				cnt_played = 0
-				for movie in arrMovies:
-					if movie["actor"] == actor:
-						cnt_movies += 1
-						cnt_played += int(movie["playcount"])
-				print("Total movies of this actor: ", cnt_movies)
-				print("Movies played of this actor: ", cnt_played)
+		choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+		if choice == "1":
+			play_file(arrMovies[idx]["rel_path"])
 
-			choice = input( "1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
-			if choice == "1":
-				play_file(arrMovies[idx]["rel_path"])
+		elif choice == "2":
+			continue
 
-			elif choice == "2":
-				continue
+		elif choice == "0" :
+			show_menu_main()
+			break
 
-			elif choice == "0" :
-				break
-
-			else :
-				print( "ERROR: Invalid choice" )
-				break
-
-	# forced to use bare except because consolemenu is not showing any exception
-	except:
-		traceback.print_exc()
+		else :
+			print( "ERROR: Invalid choice" )
+			break
 
 	input("\nPress <enter> to continue...")
 
@@ -368,68 +342,90 @@ def refresh_db():
 
 	fix_movie_folder()
 
-	try:
+	# change actor names to title case
+	for movie in db.arrMovies :
+		if movie["actor"] != movie["actor"].title() :
+			rel_path_new = movie["rel_path"].replace( movie["actor"],
+				movie["actor"].title(), 1 )
+			if os.path.exists( os.path.join(CONFIG["MOVIEDIR"], rel_path_new) ) :
+				db.update(movie["rel_path"], "rel_path", rel_path_new)
+				db.update(movie["rel_path"], "actor", movie["actor"].title())
 
-		# change actor names to title case
-		for movie in db.arrMovies :
-			if movie["actor"] != movie["actor"].title() :
-				rel_path_new = movie["rel_path"].replace( movie["actor"],
-					movie["actor"].title(), 1 )
-				if os.path.exists( os.path.join(CONFIG["MOVIEDIR"], rel_path_new) ) :
-					db.update(movie["rel_path"], "rel_path", rel_path_new)
-					db.update(movie["rel_path"], "actor", movie["actor"].title())
-
-		# check for non-existent entries in database
-		arrDelete = []
-		for movie in db.arrMovies:
-			full_path = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
-			if not os.path.exists(full_path):
-				arrDelete.append(movie["rel_path"])
-		if len(arrDelete) > 0 :
-			print( "The following files will be removed from database.")
-			print( "Please verify whether they actually exist in the filesystem")
+	# check for non-existent entries in database
+	arrDelete = []
+	for movie in db.arrMovies:
+		full_path = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
+		if not os.path.exists(full_path):
+			arrDelete.append(movie["rel_path"])
+	if len(arrDelete) > 0 :
+		print( "The following files will be removed from database.")
+		print( "Please verify whether they actually exist in the filesystem")
+		for rel_path in arrDelete :
+			print(rel_path)
+		delete = input("Are you sure to delete them?\n 1. Yes\t 2. No ")
+		if delete == "1" :
 			for rel_path in arrDelete :
-				print(rel_path)
-			delete = input("Are you sure to delete them?\n 1. Yes\t 2. No ")
-			if delete == "1" :
-				for rel_path in arrDelete :
-					delete_movie(rel_path)
+				delete_movie(rel_path)
 
-		# add any new files
-		for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
-			for file in files:
-				# add to database if not exist already
-				# assuming non-movie files are already deleted
-				path = os.path.join(root, file)
-				rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
-				if not db.exists(rel_path):
-					db.add(rel_path)
-
-	# forced to use bare except because consolemenu is not showing any exception
-	except:
-		traceback.print_exc()
+	# add any new files
+	for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
+		for file in files:
+			# add to database if not exist already
+			# assuming non-movie files are already deleted
+			path = os.path.join(root, file)
+			rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
+			if not db.exists(rel_path):
+				db.add(rel_path)
 
 	print( "\nDatabase refresh completed." )
 	input("\nPress <enter> to continue...")
 
 
-def show_menu():
+def show_menu_main():
 	"""show the main menu"""
-	menu_main = ConsoleMenu("Main menu")
-	menu_main.append_item( FunctionItem("Play a random file", play_random) )
-	menu_main.append_item( FunctionItem("Play unrated movie", play_unrated) )
-	menu_main.append_item( FunctionItem("Play a high rated movie", play_rated) )
-	menu_main.append_item( FunctionItem("Play by actor", play_actor) )
 
-	menu_other = ConsoleMenu("Other options")
-	menu_other.append_item(FunctionItem("Refresh database", refresh_db))
-	menu_other.append_item(FunctionItem("Show statistics", show_stats))
-	menu_other.append_item(FunctionItem("Copy high rated movies", copy_hi_movies))
+	choice_main = input('''
+1. Play a random file         2. Play unrated movie
+3. Play a high rated movie    4. Play by actor
+5. Other options              6: Exit
+Enter your choice: ''')
 
-	item_other = SubmenuItem("Other options", menu_other, menu_main)
-	menu_main.append_item(item_other)
-	menu_main.append_item(FunctionItem("Exit", exit))
-	menu_main.show(False)
+	while True:
+		if choice_main == "1":
+			play_random()
+		elif choice_main == "2":
+			play_unrated()
+		elif choice_main == "3":
+			play_rated()
+		elif choice_main == "4":
+			play_actor()
+		elif choice_main == "5":
+			show_menu_other()
+		elif choice_main == "6":
+			exit()
+		else:
+			print( "Invalid choice" );
+
+
+def show_menu_other():
+	"""show the other menu"""
+
+	choice_other = input('''
+1. Refresh database         2. Show statistics
+3. Copy high rated movies   4: Main Menu
+Enter your choice: ''')
+
+	while True:
+		if choice_other == "1":
+			refresh_db()
+		elif choice_other == "2":
+			show_stats()
+		elif choice_other == "3":
+			copy_hi_movies()
+		elif choice_other == "4":
+			show_menu_main()
+		else:
+			print( "Invalid choice" );
 
 
 # noinspection SpellCheckingInspection
@@ -479,7 +475,7 @@ Enter your choice: ''')
 				delete_movie(rel_path)
 
 	elif post_play == "0":
-		show_menu()
+		show_menu_main()
 
 	else:
 		print("ERROR: Invalid choice")
@@ -487,20 +483,15 @@ Enter your choice: ''')
 
 def show_stats():
 	"""Show statistics about the movie database"""
-	try:
-		cnt_played, cnt_high_rated = 0, 0
-		for movie in db.arrMovies:
-			if not movie["playcount"] == 0:
-				cnt_played += 1
-			if movie["rating"] is not None and int(movie["rating"]) >= 4:
-				cnt_high_rated += 1
-		print("Total number of movies: ", len(db.arrMovies))
-		print("Number of movies played: ", cnt_played)
-		print("Number of high rated movies: ", cnt_high_rated)
-
-	# forced to use bare except because consolemenu is not showing any exception
-	except:
-		traceback.print_exc()
+	cnt_played, cnt_high_rated = 0, 0
+	for movie in db.arrMovies:
+		if not movie["playcount"] == 0:
+			cnt_played += 1
+		if movie["rating"] is not None and int(movie["rating"]) >= 4:
+			cnt_high_rated += 1
+	print("Total number of movies: ", len(db.arrMovies))
+	print("Number of movies played: ", cnt_played)
+	print("Number of high rated movies: ", cnt_high_rated)
 
 	input("\nPress <enter> to continue...")
 
@@ -508,7 +499,7 @@ def show_stats():
 def main():
 	"""program entry point"""
 	init()
-	show_menu()
+	show_menu_main()
 
 
 # invoke the main

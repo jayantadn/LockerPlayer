@@ -21,8 +21,6 @@
 # SOFTWARE.
 
 # import external modules
-import os
-import sys
 import json
 from datetime import datetime
 
