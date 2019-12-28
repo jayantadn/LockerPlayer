@@ -307,55 +307,8 @@ def play_file(rel_path):
 	os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"],
 		db.arrMovies[idxMovie]["rel_path"]))
 
-	# post play menu
-	post_play = input('''
-1. Rate         2. Repeat actor     3. Update stats     4. Delete movie  
-5. Delete actor 0. Main menu
-Enter your choice: ''')
-
-	if post_play == "1":	# rating
-		rating = input("Enter your rating: ")
-		db.update(db.arrMovies[idxMovie]["rel_path"], "rating", rating)
-
-	elif post_play == "2":	# repeat actor
-		play_actor( db.arrMovies[idxMovie]["actor"] )
-
-	elif post_play == "3":	# update stats
-		print( "Current stats:" )
-		for key, val in db.arrMovies[idxMovie].items() :
-			if key != "rel_path":
-				print( key.ljust(10), val )
-		print( "0".ljust(10), "Go back" )
-		key = input( "Which field do you want to update: " )
-		if key != "0" :
-			val = input( "Please enter new value: " )
-			db.update( rel_path, key, val )
-
-	elif post_play == "4":	# delete movie
-		delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
-		if delete == "1":
-			delete_movie(rel_path)
-
-	elif post_play == "5":  # delete actor
-		actor = db.arrMovies[idxMovie]["actor"]
-		print( "Are you sure to delete all movies of", actor, "?" )
-		delete = input( "1. Yes\t 2. No " )
-		if delete == "1" :
-			arrDelete = []
-			for movie in db.arrMovies :
-				if movie["actor"] == actor :
-					arrDelete.append(movie["rel_path"])
-			for rel_path in arrDelete :
-				delete_movie(rel_path)
-
-	elif post_play == "0":
-		return
-
-	else:
-		print("ERROR: Invalid choice")
-
-	input("\nPress <enter> to continue...")
-
+	while True:
+		show_menu_postplay(rel_path)
 
 def play_random(arrMovies = db.arrMovies) :
 	try:
@@ -476,6 +429,59 @@ def show_menu():
 	item_other = SubmenuItem("Other options", menu_other, menu_main)
 	menu_main.append_item(item_other)
 	menu_main.show()
+
+
+# noinspection SpellCheckingInspection
+def show_menu_postplay(rel_path):
+	# post play menu
+
+	idxMovie = db.getIdxMovie(rel_path)
+
+	post_play = input('''
+1. Rate         2. Repeat actor     3. Update stats     4. Delete movie  
+5. Delete actor 0. Main Menu
+Enter your choice: ''')
+
+	if post_play == "1":  # rating
+		rating = input("Enter your rating: ")
+		db.update(db.arrMovies[idxMovie]["rel_path"], "rating", rating)
+
+	elif post_play == "2":  # repeat actor
+		play_actor(db.arrMovies[idxMovie]["actor"])
+
+	elif post_play == "3":  # update stats
+		print("Current stats:")
+		for key, val in db.arrMovies[idxMovie].items():
+			if key != "rel_path":
+				print(key.ljust(10), val)
+		print("0".ljust(10), "Go back")
+		key = input("Which field do you want to update: ")
+		if key != "0":
+			val = input("Please enter new value: ")
+			db.update(rel_path, key, val)
+
+	elif post_play == "4":  # delete movie
+		delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
+		if delete == "1":
+			delete_movie(rel_path)
+
+	elif post_play == "5":  # delete actor
+		actor = db.arrMovies[idxMovie]["actor"]
+		print("Are you sure to delete all movies of", actor, "?")
+		delete = input("1. Yes\t 2. No ")
+		if delete == "1":
+			arrDelete = []
+			for movie in db.arrMovies:
+				if movie["actor"] == actor:
+					arrDelete.append(movie["rel_path"])
+			for rel_path in arrDelete:
+				delete_movie(rel_path)
+
+	elif post_play == "0":
+		show_menu()
+
+	else:
+		print("ERROR: Invalid choice")
 
 
 def show_stats():
