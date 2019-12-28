@@ -308,9 +308,10 @@ def play_file(rel_path):
 		db.arrMovies[idxMovie]["rel_path"]))
 
 	# post play menu
-	post_play = input(
-		"1. Rate  2. Repeat actor  3. Update stats  4. Delete movie  "
-		"5. Delete actor  0. Go back \nEnter your choice: ")
+	post_play = input('''
+1. Rate         2. Repeat actor     3. Update stats     4. Delete movie  
+5. Delete actor 0. Main menu
+Enter your choice: ''')
 
 	if post_play == "1":	# rating
 		rating = input("Enter your rating: ")
