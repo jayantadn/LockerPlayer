@@ -302,14 +302,7 @@ def play_random(arrMovies = db.arrMovies) :
 		# print stats for actor
 		actor = arrMovies[idx]["actor"]
 		if actor is not None and not actor == "Unknown":
-			cnt_movies = 0
-			cnt_played = 0
-			for movie in arrMovies:
-				if movie["actor"] == actor:
-					cnt_movies += 1
-					cnt_played += int(movie["playcount"])
-			print("Total movies of this actor: ", cnt_movies)
-			print("Movies played of this actor: ", cnt_played)
+			show_stats_actor(actor)
 
 		choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
 		if choice == "1":
@@ -411,7 +404,7 @@ Enter your choice: ''')
 		if choice_other == "1":
 			refresh_db()
 		elif choice_other == "2":
-			show_stats()
+			show_stats_overall()
 		elif choice_other == "3":
 			copy_hi_movies()
 		elif choice_other == "4":
@@ -474,7 +467,22 @@ Enter your choice: ''')
 			print("ERROR: Invalid choice")
 
 
-def show_stats():
+def show_stats_actor(actor):
+	"""Show the statistics for an actor"""
+
+	arrMovies = db.arrMovies
+	cnt_played = 0
+	cnt_movies = 0
+	for movie in arrMovies:
+		if movie["actor"] == actor:
+			if movie["rating"] is not None:
+				cnt_played += 1
+			cnt_movies += 1
+	print("Total movies of this actor: ", cnt_movies)
+	print("Movies rated for this actor: ", cnt_played)
+
+
+def show_stats_overall():
 	"""Show statistics about the movie database"""
 	cnt_played, cnt_high_rated = 0, 0
 	for movie in db.arrMovies:
