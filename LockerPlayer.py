@@ -299,11 +299,6 @@ def play_random(arrMovies = db.arrMovies) :
         print("category = ", arrMovies[idx]["category"])
         print("rating = ", arrMovies[idx]["rating"])
 
-        # print stats for actor
-        actor = arrMovies[idx]["actor"]
-        if actor is not None and not actor == "Unknown":
-            show_stats_actor(actor)
-
         choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
             play_file(arrMovies[idx]["rel_path"])
@@ -328,7 +323,10 @@ def play_random_actor():
         
     while True:
         idx = random.randrange(0, len(arrActor), 1)
-        print( "\nActor of the day: ", arrActor[idx] )
+        actor = arrActor[idx]
+        print( "\nActor of the day: ", actor )
+        if actor is not None and not actor == "Unknown":
+            show_stats_actor(actor)
         
         choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
