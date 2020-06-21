@@ -425,7 +425,7 @@ def show_menu_other():
     while True:
         choice_other = input('''
 1. Refresh database         2. Show statistics
-3. Copy high rated movies   4: Main Menu
+3. Copy high rated movies   0. Main Menu
 Enter your choice: ''')
 
         if choice_other == "1":
@@ -434,7 +434,7 @@ Enter your choice: ''')
             show_stats_overall()
         elif choice_other == "3":
             copy_hi_movies()
-        elif choice_other == "4":
+        elif choice_other == "0":
             show_menu_main()
         else:
             print( "Invalid choice" );
