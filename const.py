@@ -28,5 +28,6 @@ import os
 CURDIR = os.path.dirname(sys.argv[0])
 TMPDIR = os.path.join(CURDIR, "tmp")
 CONFIGFILE = os.path.join(CURDIR, "config.ini")
-DBDIR = os.path.join(CURDIR, "database.json")
+MOVIEDBFILE = os.path.join(CURDIR, "moviedb.json")
+ACTORDBFILE = os.path.join(CURDIR, "actordb.json")
 EXTLIST = [".m4v", ".f4v", ".mp4", ".MP4", ".mkv", ".avi", ".wmv", ".flv", ".mov", ".mpg", ".mpeg", ".264"]

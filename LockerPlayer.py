@@ -32,11 +32,11 @@ import getpass
 
 # import internal modules
 from const import *
-from db import DB
+from moviedb import MOVIEDB
 
 # global variables
 CONFIG = dict()
-db = DB()
+moviedb = MOVIEDB()
 
 
 # --- all function definitions ---
@@ -51,7 +51,7 @@ def copy_hi_movies():
         print( "Please enter a valid path" ); input();  return
 
     # loop through the database and copy movies with high rating
-    for movie in db.arrMovies:
+    for movie in moviedb.arrMovies:
         if movie["rating"] is not None and movie["rating"] >= int(rating):
             src = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
             dest = os.path.join(destdir, movie["rel_path"])
@@ -65,8 +65,8 @@ def copy_hi_movies():
 def delete_movie(rel_path) :
     print("deleting file: ", rel_path)
     send2trash(os.path.join(CONFIG["MOVIEDIR"], rel_path))
-    if db.exists(rel_path):
-        db.remove(rel_path)
+    if moviedb.exists(rel_path):
+        moviedb.remove(rel_path)
 
 
 def fix_movie_folder():
@@ -222,7 +222,7 @@ def play_actor(actor=None) :
     if actor is None :
         actor = input( "Actor name: " )
         arrActor = []
-        for movie in db.arrMovies:
+        for movie in moviedb.arrMovies:
             if actor in movie["actor"] and movie["actor"] not in arrActor:
                 arrActor.append( movie["actor"] )
 
@@ -243,7 +243,7 @@ def play_actor(actor=None) :
 
     # create array of movies by actor. give movie array to randomize
     arrMovies = []
-    for movie in db.arrMovies:
+    for movie in moviedb.arrMovies:
         if actor == movie["actor"] :
             arrMovies.append(movie)
     assert len(arrMovies) != 0, "No movies found"
@@ -254,7 +254,7 @@ def play_rated() :
     """Play a high rated movie"""
     rating = int( input("Enter the minimum rating: ") )
     arrMovies = []
-    for movie in db.arrMovies :
+    for movie in moviedb.arrMovies :
         if movie["rating"] is not None and movie["rating"] >= rating :
             arrMovies.append(movie)
     play_random(arrMovies)
@@ -263,7 +263,7 @@ def play_rated() :
 def play_unrated() :
     """Play an unrated movie"""
     arrMovies = []
-    for movie in db.arrMovies :
+    for movie in moviedb.arrMovies :
         if movie["rating"] is None :
             arrMovies.append(movie)
     play_random(arrMovies)
@@ -274,17 +274,17 @@ def play_file(rel_path):
 
     assert os.path.exists( os.path.join(CONFIG["MOVIEDIR"], rel_path) ), "File not found"
 
-    idxMovie = db.getIdxMovie(rel_path)
+    idxMovie = moviedb.getIdxMovie(rel_path)
 
-    playcount = int(db.arrMovies[idxMovie]["playcount"]) + 1
-    db.update(db.arrMovies[idxMovie]["rel_path"], "playcount", playcount)
+    playcount = int(moviedb.arrMovies[idxMovie]["playcount"]) + 1
+    moviedb.update(moviedb.arrMovies[idxMovie]["rel_path"], "playcount", playcount)
 
     os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"],
-        db.arrMovies[idxMovie]["rel_path"]))
+        moviedb.arrMovies[idxMovie]["rel_path"]))
 
     show_menu_postplay(rel_path)
 
-def play_random(arrMovies = db.arrMovies) :
+def play_random(arrMovies = moviedb.arrMovies) :
     assert len(arrMovies) > 0, \
         "[ERROR] No movies found"
 
@@ -317,31 +317,34 @@ def play_random(arrMovies = db.arrMovies) :
 
 def play_random_actor():
     arrActor = []
-    for movie in db.arrMovies:
+    for movie in moviedb.arrMovies:
         if movie["actor"] not in arrActor:
             arrActor.append( movie["actor"] )
+    
+    for actor in arrActor :
+        print(actor)
         
-    while True:
-        idx = random.randrange(0, len(arrActor), 1)
-        actor = arrActor[idx]
-        print( "\nActor of the day: ", actor )
-        if actor is not None and not actor == "Unknown":
-            show_stats_actor(actor)
+    # while True:
+        # idx = random.randrange(0, len(arrActor), 1)
+        # actor = arrActor[idx]
+        # print( "\nActor of the day: ", actor )
+        # if actor is not None and not actor == "Unknown":
+            # show_stats_actor(actor)
         
-        choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
-        if choice == "1":
-            play_actor(arrActor[idx])
+        # choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        # if choice == "1":
+            # play_actor(arrActor[idx])
 
-        elif choice == "2":
-            continue
+        # elif choice == "2":
+            # continue
 
-        elif choice == "0" :
-            show_menu_main()
-            break
+        # elif choice == "0" :
+            # show_menu_main()
+            # break
 
-        else :
-            print( "ERROR: Invalid choice" )
-            break       
+        # else :
+            # print( "ERROR: Invalid choice" )
+            # break       
 
 
 def refresh_db():
@@ -353,17 +356,17 @@ def refresh_db():
     fix_movie_folder()
 
     # change actor names to title case
-    for movie in db.arrMovies :
+    for movie in moviedb.arrMovies :
         if movie["actor"] != movie["actor"].title() :
             rel_path_new = movie["rel_path"].replace( movie["actor"],
                 movie["actor"].title(), 1 )
             if os.path.exists( os.path.join(CONFIG["MOVIEDIR"], rel_path_new) ) :
-                db.update(movie["rel_path"], "rel_path", rel_path_new)
-                db.update(movie["rel_path"], "actor", movie["actor"].title())
+                moviedb.update(movie["rel_path"], "rel_path", rel_path_new)
+                moviedb.update(movie["rel_path"], "actor", movie["actor"].title())
 
     # check for non-existent entries in database
     arrDelete = []
-    for movie in db.arrMovies:
+    for movie in moviedb.arrMovies:
         full_path = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
         if not os.path.exists(full_path):
             arrDelete.append(movie["rel_path"])
@@ -384,8 +387,8 @@ def refresh_db():
             # assuming non-movie files are already deleted
             path = os.path.join(root, file)
             rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
-            if not db.exists(rel_path):
-                db.add(rel_path)
+            if not moviedb.exists(rel_path):
+                moviedb.add(rel_path)
 
     print( "\nDatabase refresh completed." )
 
@@ -444,7 +447,7 @@ Enter your choice: ''')
 def show_menu_postplay(rel_path):
     # post play menu
 
-    idxMovie = db.getIdxMovie(rel_path)
+    idxMovie = moviedb.getIdxMovie(rel_path)
 
     while True:
         post_play = input('''
@@ -454,21 +457,21 @@ Enter your choice: ''')
 
         if post_play == "1":  # rating
             rating = input("Enter your rating: ")
-            db.update(db.arrMovies[idxMovie]["rel_path"], "rating", rating)
+            moviedb.update(moviedb.arrMovies[idxMovie]["rel_path"], "rating", rating)
 
         elif post_play == "2":  # repeat actor
-            play_actor(db.arrMovies[idxMovie]["actor"])
+            play_actor(moviedb.arrMovies[idxMovie]["actor"])
 
         elif post_play == "3":  # update stats
             print("Current stats:")
-            for key, val in db.arrMovies[idxMovie].items():
+            for key, val in moviedb.arrMovies[idxMovie].items():
                 if key != "rel_path":
                     print(key.ljust(10), val)
             print("0".ljust(10), "Go back")
             key = input("Which field do you want to update: ")
             if key != "0":
                 val = input("Please enter new value: ")
-                db.update(rel_path, key, val)
+                moviedb.update(rel_path, key, val)
 
         elif post_play == "4":  # delete movie
             delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
@@ -476,12 +479,12 @@ Enter your choice: ''')
                 delete_movie(rel_path)
 
         elif post_play == "5":  # delete actor
-            actor = db.arrMovies[idxMovie]["actor"]
+            actor = moviedb.arrMovies[idxMovie]["actor"]
             print("Are you sure to delete all movies of", actor, "?")
             delete = input("1. Yes\t 2. No ")
             if delete == "1":
                 arrDelete = []
-                for movie in db.arrMovies:
+                for movie in moviedb.arrMovies:
                     if movie["actor"] == actor:
                         arrDelete.append(movie["rel_path"])
                 for rel_path in arrDelete:
@@ -497,7 +500,7 @@ Enter your choice: ''')
 def show_stats_actor(actor):
     """Show the statistics for an actor"""
 
-    arrMovies = db.arrMovies
+    arrMovies = moviedb.arrMovies
     cnt_played = 0
     cnt_movies = 0
     for movie in arrMovies:
@@ -512,12 +515,12 @@ def show_stats_actor(actor):
 def show_stats_overall():
     """Show statistics about the movie database"""
     cnt_played, cnt_high_rated = 0, 0
-    for movie in db.arrMovies:
+    for movie in moviedb.arrMovies:
         if not movie["playcount"] == 0:
             cnt_played += 1
         if movie["rating"] is not None and int(movie["rating"]) >= 4:
             cnt_high_rated += 1
-    print("Total number of movies: ", len(db.arrMovies))
+    print("Total number of movies: ", len(moviedb.arrMovies))
     print("Number of movies played: ", cnt_played)
     print("Number of high rated movies: ", cnt_high_rated)
 
