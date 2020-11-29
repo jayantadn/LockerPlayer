@@ -321,30 +321,27 @@ def play_random_actor():
         if movie["actor"] not in arrActor:
             arrActor.append( movie["actor"] )
     
-    for actor in arrActor :
-        print(actor)
+    while True:
+        idx = random.randrange(0, len(arrActor), 1)
+        actor = arrActor[idx]
+        print( "\nActor of the day: ", actor )
+        if actor is not None and not actor == "Unknown":
+            show_stats_actor(actor)
         
-    # while True:
-        # idx = random.randrange(0, len(arrActor), 1)
-        # actor = arrActor[idx]
-        # print( "\nActor of the day: ", actor )
-        # if actor is not None and not actor == "Unknown":
-            # show_stats_actor(actor)
-        
-        # choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
-        # if choice == "1":
-            # play_actor(arrActor[idx])
+        choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":
+            play_actor(arrActor[idx])
 
-        # elif choice == "2":
-            # continue
+        elif choice == "2":
+            continue
 
-        # elif choice == "0" :
-            # show_menu_main()
-            # break
+        elif choice == "0" :
+            show_menu_main()
+            break
 
-        # else :
-            # print( "ERROR: Invalid choice" )
-            # break       
+        else :
+            print( "ERROR: Invalid choice" )
+            break       
 
 
 def refresh_db():
@@ -352,6 +349,7 @@ def refresh_db():
 
     # strategy: refresh_db should only modify the database.
     # It should not touch the movie folder.
+    # --> OUCH!! already modifying the movie folder with fix_movie_folder()
 
     fix_movie_folder()
 
