@@ -33,10 +33,12 @@ import getpass
 # import internal modules
 from const import *
 from moviedb import MOVIEDB
+from actordb import ACTORDB
 
 # global variables
 CONFIG = dict()
 moviedb = MOVIEDB()
+actordb = ACTORDB()
 
 
 # --- all function definitions ---
@@ -316,21 +318,18 @@ def play_random(arrMovies = moviedb.arrMovies) :
 
 
 def play_random_actor():
-    arrActor = []
-    for movie in moviedb.arrMovies:
-        if movie["actor"] not in arrActor:
-            arrActor.append( movie["actor"] )
+    """Play a random actor from ActorDB"""
     
     while True:
-        idx = random.randrange(0, len(arrActor), 1)
-        actor = arrActor[idx]
+        idx = random.randrange(0, len(actordb.arrActors), 1)
+        actor = actordb.arrActors[idx]["name"]
         print( "\nActor of the day: ", actor )
         if actor is not None and not actor == "Unknown":
             show_stats_actor(actor)
         
         choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
-            play_actor(arrActor[idx])
+            play_actor(actordb.arrActors[idx])
 
         elif choice == "2":
             continue
@@ -523,11 +522,8 @@ def show_stats_overall():
     print("Number of high rated movies: ", cnt_high_rated)
 
 
-def main():
+if __name__ == "__main__":
     """program entry point"""
+    
     init()
     show_menu_main()
-
-
-# invoke the main
-main()

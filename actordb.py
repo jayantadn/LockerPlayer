@@ -29,80 +29,82 @@ from const import *
 
 
 class ACTORDB:
-	"""database class"""
-	# contructor
-	def __init__(self):
-		self.arrActors = []
-		if not os.path.exists(ACTORDBFILE):
-			fo = open(ACTORDBFILE, "w")
-			fo.close()
-		else:
-			fo = open(ACTORDBFILE, "r")
-			contents = fo.read()
-			if not len(contents) == 0:
-				self.arrActors = json.loads(contents)
-			fo.close()
+    """database class"""
+    # contructor
+    def __init__(self):
+        self.arrActors = []
+        if not os.path.exists(ACTORDBFILE):
+            fo = open(ACTORDBFILE, "w")
+            fo.close()
+        else:
+            fo = open(ACTORDBFILE, "r")
+            contents = fo.read()
+            if not len(contents) == 0:
+                self.arrActors = json.loads(contents)
+            fo.close()
 
-	def save(self):
-		"""save database from to disk"""
-		fo = open(ACTORDBFILE, "w")
-		fo.write(json.dumps(self.arrActors, indent=4))
-		fo.close()
 
-	def add(self, actor):
-		"""add a new actor to database"""
+    def save(self):
+        """save database from to disk"""
         
-        # this function will reject duplicate entries
-                print("Actor already present in database: ", actor)
-                return
-
-		print("Adding actor to database:", actor)
-
-		# create the entry
-		entry = {
-			"name": actor,
-			"rating": None
-		}
-		self.arrActors.append(entry)
-		self.save()
-##### continue from here
+        fo = open(ACTORDBFILE, "w")
+        fo.write(json.dumps(self.arrActors, indent=4))
+        fo.close()
 
 
-	def remove(self, actor):
-		"""remove an actor from database"""
+    def add(self, actor):
+        """add a new actor to database"""
+        """Note: duplicate check is performed within this function"""
+        
+        if self.exists(actor) :
+            print("Actor already exist: " + actor)
+            return
+        
+        print("Adding actor to database:", actor)
+
+        # create the entry
+        entry = {
+            "name": actor,
+            "timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S"),
+            "rating": None
+        }
+        self.arrActors.append(entry)
+        self.save()
+
+
+    def remove(self, actor):
+        """remove an actor from database"""
 
         print( "Removing from database: ", actor )
         self.arrActors.pop( self.getIdxActor(actor) )
         self.save()
 
-	def update(self, actor, key, val):
-		"""update attributes for a movie"""
-		for idx, data in enumerate(self.arrActors):
-			if data["actor"] == actor:
-				# its not very clear whether db library should do any validations
-				# will wait and see what is better
-				assert key in self.arrActors[idx], "Invalid key"
 
-				# formatting the value
-				if key in ("rating", "playcount"):
-					val = int(val)
+    def rate(self, actor, val):
+        """update rating for an actor"""
+        
+        for idx, data in enumerate(self.arrActors):
+            if data["name"] == actor:
+                print("Changing rating of", actor, "to", val)
+                self.arrActors[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+                self.arrActors[idx]["rating"] = int(val)
+                self.save()
+                break
 
-				print("Updating ", key, "to ", val, "for ", actor)
-				self.arrActors[idx]["timestamp"] = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-				self.arrActors[idx][key] = val
-				self.save()
-				break
 
-	def exists(self, actor):
-		"""check if a movie exist in database"""
-		flg_exist = False
-		for data in self.arrActors:
-			if data["actor"] == actor:
-				flg_exist = True
-		return flg_exist
+    def exists(self, actor):
+        """check if an actor exist in database"""
+        
+        flg_exist = False
+        for data in self.arrActors:
+            if data["name"] == actor :
+                flg_exist = True
+        return flg_exist
 
-	def getIdxMovie(self, actor) :
-		"""Get the idx of the given movie"""
-		for idx, data in enumerate(self.arrActors):
-			if data["actor"] == actor:
-				return idx
+
+    def getIdxActor(self, actor) :
+        """Get the idx of the given actor"""
+        
+        for idx, data in enumerate(self.arrActors):
+            if data["name"] == actor:
+                return idx
