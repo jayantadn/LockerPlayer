@@ -248,7 +248,9 @@ def play_actor(actor=None) :
     for movie in moviedb.arrMovies:
         if actor == movie["actor"] :
             arrMovies.append(movie)
-    assert len(arrMovies) != 0, "No movies found"
+    if len(arrMovies) == 0 :
+        print("No movies found for actor:", actor)
+        return
     play_random(arrMovies)
 
 
@@ -329,7 +331,7 @@ def play_random_actor():
         
         choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
-            play_actor(actordb.arrActors[idx])
+            play_actor(actor)
 
         elif choice == "2":
             continue
@@ -448,8 +450,8 @@ def show_menu_postplay(rel_path):
 
     while True:
         post_play = input('''
-1. Rate         2. Repeat actor     3. Update stats     4. Delete movie  
-5. Delete actor 0. Main Menu
+1. Rate         2. Repeat actor     3. Update stats       
+5. Delete actor 6. Rate actor       0. Main Menu
 Enter your choice: ''')
 
         if post_play == "1":  # rating
@@ -487,6 +489,11 @@ Enter your choice: ''')
                 for rel_path in arrDelete:
                     delete_movie(rel_path)
 
+        elif post_play == "6":  # rate actor
+            actor = moviedb.arrMovies[idxMovie]["actor"]
+            rating = input("Please enter rating for actor " + actor + " : ")
+            actordb.rate(actor, rating)
+
         elif post_play == "0":
             show_menu_main()
 
@@ -497,6 +504,7 @@ Enter your choice: ''')
 def show_stats_actor(actor):
     """Show the statistics for an actor"""
 
+    # calculate number of movies
     arrMovies = moviedb.arrMovies
     cnt_played = 0
     cnt_movies = 0
@@ -505,8 +513,11 @@ def show_stats_actor(actor):
             if movie["rating"] is not None:
                 cnt_played += 1
             cnt_movies += 1
-    print("Total movies of this actor: ", cnt_movies)
-    print("Movies rated for this actor: ", cnt_played)
+            
+    # print all values
+    print("Actor rating:", actordb.getRating(actor))
+    print("Total movies of this actor:", cnt_movies)
+    print("Movies rated for this actor:", cnt_played)
 
 
 def show_stats_overall():

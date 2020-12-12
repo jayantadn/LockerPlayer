@@ -92,6 +92,16 @@ class ACTORDB:
                 break
 
 
+    def getRating(self, actor):
+        """Get the rating for a given actor"""
+
+        for idx, data in enumerate(self.arrActors) :
+            if data["name"] == actor :
+                return data["rating"]
+                
+        return None
+
+
     def exists(self, actor):
         """check if an actor exist in database"""
         
