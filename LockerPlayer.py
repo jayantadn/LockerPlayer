@@ -450,7 +450,7 @@ def show_menu_postplay(rel_path):
 
     while True:
         post_play = input('''
-1. Rate         2. Repeat actor     3. Update stats       
+1. Rate movie   2. Repeat actor     3. Update stats       4. Delete movie
 5. Delete actor 6. Rate actor       0. Main Menu
 Enter your choice: ''')
 
