@@ -71,6 +71,20 @@ def delete_movie(rel_path) :
         moviedb.remove(rel_path)
 
 
+def fix_actor_db():
+    """fix anything wrong with the json database of actors"""
+    
+    # remove actor if no movies found
+    for actor in actordb.arrActors :
+        found = False
+        for movie in moviedb.arrMovies :
+            if actor["name"] == movie["actor"] :
+                found = True
+                break
+        if not found :
+            print("Removing actor as no movies found for:", actor["name"])
+            actordb.remove(actor["name"])
+
 def fix_movie_folder():
     """fix problems in the movie folder"""
 
@@ -91,16 +105,16 @@ def fix_movie_folder():
     # traverse through movie folder and check if all filenames are valid
     arrDelete = []
     arrCase = []
+    arrEmptyFolders = []
     for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]) :
+        if len(subdirs) + len(files) == 0 :
+            arrEmptyFolders.append(root)
+    
         for file in files:
             path = os.path.join(root, file)
             try:
-
                 # extract the relative path
                 rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
-
-                # invalid filename will throw exception
-                # print("checking filename: ", path)
 
                 # mark non movie files for delete
                 ext = os.path.splitext(path)[1]
@@ -124,6 +138,14 @@ def fix_movie_folder():
 
             except UnicodeEncodeError:
                 arr_filename_errors.append(root)
+
+    # delete all empty folders
+    print(arrEmptyFolders)
+    confirm = input("The above folders are empty and will be removed. Please confirm (y/n): ")
+    if confirm == "y" :
+        for folder in arrEmptyFolders :
+            print("Removing", folder)
+            # os.rmdir(folder)
 
     # display the filename and dirname errors
     if len(arr_filename_errors) > 0 :
@@ -173,12 +195,12 @@ def init():
     """read the configuration file and retrieve the configuration parameters"""
 
     # run the script only with a password
-    while True:
-        passwd = getpass.getpass()
-        if not passwd == "passwd":
-            print("Invalid password. Try again.")
-        else:
-            break
+    # while True:
+        # passwd = getpass.getpass()
+        # if not passwd == "passwd":
+            # print("Invalid password. Try again.")
+        # else:
+            # break
 
     # check if config file exist, else exit
     if not os.path.exists(CONFIGFILE):
@@ -325,7 +347,42 @@ def play_random_actor():
     while True:
         idx = random.randrange(0, len(actordb.arrActors), 1)
         actor = actordb.arrActors[idx]["name"]
-        print( "\nActor of the day: ", actor )
+        if actor is not None and not actor == "Unknown":
+            show_stats_actor(actor)
+        
+        choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":
+            play_actor(actor)
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0" :
+            show_menu_main()
+            break
+
+        else :
+            print( "ERROR: Invalid choice" )
+            break       
+
+
+def play_rated_actor():
+    """Play movie for a high rated actor"""
+    
+    # fetch minimum rating from user
+    rating = int( input("Please enter minimum rating for actor: ") )
+    
+    # create a list of actors with at least given rating
+    actorlist = []
+    for actor in actordb.arrActors :
+        if actor["rating"] is not None :
+            if int( actor["rating"] ) >= rating :
+                actorlist.append(actor["name"])
+
+    # randomize and play actor from the list
+    while True:
+        idx = random.randint(0, len(actorlist)-1)
+        actor = actorlist[idx]
         if actor is not None and not actor == "Unknown":
             show_stats_actor(actor)
         
@@ -348,11 +405,8 @@ def play_random_actor():
 def refresh_db():
     """traverse movie folder and update the database"""
 
-    # strategy: refresh_db should only modify the database.
-    # It should not touch the movie folder.
-    # --> OUCH!! already modifying the movie folder with fix_movie_folder()
-
     fix_movie_folder()
+    fix_actor_db()
 
     # change actor names to title case
     for movie in moviedb.arrMovies :
@@ -400,6 +454,7 @@ def show_menu_main():
 1. Play a random file         2. Play unrated movie
 3. Play a high rated movie    4. Play by actor
 5. Play random actor          6. Other options
+7. Play high rated actor
 0: Exit
 Enter your choice: ''')
 
@@ -415,6 +470,8 @@ Enter your choice: ''')
             play_random_actor()
         elif choice_main == "6":
             show_menu_other()
+        elif choice_main == "7":
+            play_rated_actor()
         elif choice_main == "0":
             exit()
         else:
@@ -515,6 +572,8 @@ def show_stats_actor(actor):
             cnt_movies += 1
             
     # print all values
+    print("")
+    print("Selected actor:", actor)
     print("Actor rating:", actordb.getRating(actor))
     print("Total movies of this actor:", cnt_movies)
     print("Movies rated for this actor:", cnt_played)
