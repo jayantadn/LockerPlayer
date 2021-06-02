@@ -29,6 +29,8 @@ import random
 import traceback
 from send2trash import send2trash
 import getpass
+import subprocess
+import progressbar # pip install progressbar2
 
 # import internal modules
 from const import *
@@ -43,6 +45,14 @@ actordb = ACTORDB()
 
 # --- all function definitions ---
 
+# A custom assert implementation
+def myassert(expr, msg) :
+    if not expr :
+        print("ERROR: " + msg)
+        input("Press enter to exit...")
+        exit(1)
+        
+
 def copy_hi_movies():
     """Copy high rated movies to another location"""
 
@@ -50,19 +60,34 @@ def copy_hi_movies():
     destdir = input( "Enter destination: " )
     rating = input( "Enter the minimum rating: ")
     if not os.path.isdir(destdir) :
-        print( "Please enter a valid path" ); input();  return
+        os.makedirs( destdir )
 
-    # loop through the database and copy movies with high rating
+    # loop through the database and create list of movies with high rating
+    filelist = []
     for movie in moviedb.arrMovies:
         if movie["rating"] is not None and movie["rating"] >= int(rating):
             src = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
             dest = os.path.join(destdir, movie["rel_path"])
-            if not os.path.exists(os.path.dirname(dest)) :
-                os.makedirs(os.path.dirname(dest))
             if not os.path.exists(dest):
-                print("Copying file:", movie["rel_path"])
-                shutil.copy2(src, dest)
+                filelist.append( [src, dest] )
 
+    # select your favorite copy utility
+    copy = None
+    try :
+        subprocess.check_output(["where", "xcopy"])
+        copy = "xcopy"
+        print("Using XCopy to copy files")
+    except :
+        print("Using python built in copy")
+    
+    # perform copy
+    for fileset in progressbar.progressbar(filelist) :
+        if not os.path.exists( os.path.dirname( fileset[1] ) ) :
+            os.makedirs( os.path.dirname( fileset[1] ) )
+        if copy == "xcopy" :
+            subprocess.run( [ "xcopy", fileset[0], os.path.dirname(fileset[1]), "/j/q" ], stdout=subprocess.DEVNULL )
+        else :
+            shutil.copy2( fileset[0], fileset[1] )
             
 def delete_movie(rel_path) :
     print("deleting file: ", rel_path)
@@ -82,7 +107,7 @@ def fix_actor_db():
                 found = True
                 break
         if not found :
-            print("Removing actor as no movies found for:", actor["name"])
+            print("Removing actor as no movies found:", actor["name"])
             actordb.remove(actor["name"])
 
 def fix_movie_folder():
@@ -140,12 +165,13 @@ def fix_movie_folder():
                 arr_filename_errors.append(root)
 
     # delete all empty folders
-    print(arrEmptyFolders)
-    confirm = input("The above folders are empty and will be removed. Please confirm (y/n): ")
-    if confirm == "y" :
+    if len(arrEmptyFolders) > 0 :
         for folder in arrEmptyFolders :
-            print("Removing", folder)
-            # os.rmdir(folder)
+            print(folder)
+        confirm = input("\nThe above folders are empty and will be removed. Please confirm (y/n): ")
+        if confirm == "y" :
+            for folder in arrEmptyFolders :
+                os.rmdir(folder)
 
     # display the filename and dirname errors
     if len(arr_filename_errors) > 0 :
