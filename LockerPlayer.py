@@ -40,6 +40,7 @@ try :
     import getpass
     import subprocess
     import progressbar # pip install progressbar2
+    import hashlib
 except :
     myassert(False, "Import failed")
     
@@ -226,12 +227,14 @@ def init():
     """read the configuration file and retrieve the configuration parameters"""
 
     # run the script only with a password
-    # while True:
-        # passwd = getpass.getpass()
-        # if not passwd == "passwd":
-            # print("Invalid password. Try again.")
-        # else:
-            # break
+    while True:
+        passwd = getpass.getpass()
+        h = hashlib.md5()
+        h.update(passwd.encode("utf-8"))
+        if not h.hexdigest() == "76a2173be6393254e72ffa4d6df1030a" :
+            print("Invalid password. Try again.")
+        else:
+            break
 
     # check if config file exist, else exit
     if not os.path.exists(CONFIGFILE):
@@ -326,6 +329,33 @@ def play_unrated() :
     play_random(arrMovies)
 
 
+def play_unrated_actor() :
+    """Play an unrated actor"""
+            
+    actorlist = []
+    for actor in actordb.arrActors :
+        if actor["rating"] is None :
+            actorlist.append(actor)
+            
+    play_random_actor(actorlist)
+
+def play_unplayed_actor() :
+    """Play an actor never played before"""
+
+    actorlist = []
+    for actor in actordb.arrActors :
+        cnt_movies = 0
+        for movie in moviedb.arrMovies :
+            if movie["actor"] == actor["name"] :
+                if movie["playcount"] > 0 :
+                    break
+            cnt_movies += 1
+        if cnt_movies >= len(moviedb.arrMovies) :
+            actorlist.append(actor)
+
+    play_random_actor(actorlist)
+
+
 def play_file(rel_path):
     """play the movie and update stats"""
 
@@ -350,11 +380,12 @@ def play_random(arrMovies = moviedb.arrMovies) :
         idx = random.randrange(0, len(arrMovies), 1)
 
         # print stats for the file
-        print("\nWe found the following movie for you:")
-        print("actor = ", arrMovies[idx]["actor"])
+        print("")
+        print("We found the following movie for you:")
         print("title = ", os.path.basename(arrMovies[idx]["rel_path"]))
         print("category = ", arrMovies[idx]["category"])
         print("rating = ", arrMovies[idx]["rating"])
+        show_stats_actor(arrMovies[idx]["actor"])
 
         choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
@@ -372,12 +403,12 @@ def play_random(arrMovies = moviedb.arrMovies) :
             break
 
 
-def play_random_actor():
+def play_random_actor(actorlist=actordb.arrActors):
     """Play a random actor from ActorDB"""
     
     while True:
-        idx = random.randrange(0, len(actordb.arrActors), 1)
-        actor = actordb.arrActors[idx]["name"]
+        idx = random.randrange(0, len(actorlist), 1)
+        actor = actorlist[idx]["name"]
         if actor is not None and not actor == "Unknown":
             show_stats_actor(actor)
         
@@ -481,13 +512,11 @@ def show_menu_main():
     """show the main menu"""
 
     menu = Menu()
-    menu.add( MenuItem( "Play a random file", play_random ) )
-    menu.add( MenuItem( "Play a hi rated movie", play_rated ) )
-    menu.add( MenuItem( "Play selected actor", play_actor ) )
-    menu.add( MenuItem( "Play a high rated actor", play_rated_actor ) )
-    menu.add( MenuItem( "Play random actor", play_random_actor ) )
+    menu.add( MenuItem( "Play by movie", show_menu_movie ) )
+    menu.add( MenuItem( "Play by actor", show_menu_actor ) )
     menu.add( MenuItem( "Other options", show_menu_other ) )
     while True : menu.show()
+    
     
 
 def show_menu_other():
@@ -499,6 +528,27 @@ def show_menu_other():
     menu.add( MenuItem( "Copy high rated movies", copy_hi_movies ) )
     while True : menu.show()
     
+
+def show_menu_movie():
+    """show menu to select a movie"""
+
+    menu = Menu()
+    menu.add( MenuItem( "Play a random movie", play_random ) )
+    menu.add( MenuItem( "Play a hi rated movie", play_rated ) )
+    menu.add( MenuItem( "Play an unrated movie", play_unrated ) )
+    while True : menu.show()
+
+def show_menu_actor():
+    """show menu to select an actor"""
+
+    menu = Menu()
+    menu.add( MenuItem( "Play selected actor", play_actor ) )
+    menu.add( MenuItem( "Play random actor", play_random_actor ) )
+    menu.add( MenuItem( "Play a high rated actor", play_rated_actor ) )
+    menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
+    menu.add( MenuItem( "Play an actor never played before", play_unplayed_actor ) )
+    while True : menu.show()
+
 
 # post play menu
 def show_menu_postplay(rel_path):
@@ -561,38 +611,69 @@ def show_menu_postplay(rel_path):
     while True : menu.show()
 
 
-def show_stats_actor(actor):
+def show_stats_actor(actorname):
     """Show the statistics for an actor"""
 
     # calculate number of movies
     arrMovies = moviedb.arrMovies
+    cnt_rated = 0
     cnt_played = 0
     cnt_movies = 0
     for movie in arrMovies:
-        if movie["actor"] == actor:
-            if movie["rating"] is not None:
+        if movie["actor"] == actorname:
+            if movie["playcount"] != 0:
                 cnt_played += 1
+            if movie["rating"] is not None:
+                cnt_rated += 1
             cnt_movies += 1
             
     # print all values
     print("")
-    print("Selected actor:", actor)
-    print("Actor rating:", actordb.getRating(actor))
+    print("Selected actor:", actorname)
+    print("Actor rating:", actordb.getRating(actorname))
     print("Total movies of this actor:", cnt_movies)
-    print("Movies rated for this actor:", cnt_played)
+    print("Movies played for this actor:", cnt_played)
+    print("Movies rated for this actor:", cnt_rated)
 
 
 def show_stats_overall():
     """Show statistics about the movie database"""
-    cnt_played, cnt_high_rated = 0, 0
+    
+    # computations inside movie array
+    cnt_played, cnt_rated, cnt_hi_rated = 0, 0, 0
     for movie in moviedb.arrMovies:
         if not movie["playcount"] == 0:
             cnt_played += 1
-        if movie["rating"] is not None and int(movie["rating"]) >= 4:
-            cnt_high_rated += 1
-    print("\nTotal number of movies: ", len(moviedb.arrMovies))
+        if movie["rating"] is not None :
+            cnt_rated += 1
+            if int(movie["rating"]) >= 4 :
+                cnt_hi_rated += 1
+    
+    # computations inside actor array
+    cnt_actor_unplayed, cnt_actor_hi_rated = 0, 0
+    for actor in actordb.arrActors :
+        cnt_movies = 0
+        for movie in moviedb.arrMovies :
+            if movie["actor"] == actor["name"] :
+                if movie["playcount"] > 0 :
+                    break
+            cnt_movies += 1
+        if cnt_movies >= len(moviedb.arrMovies) :
+            cnt_actor_unplayed += 1
+        if actor["rating"] is not None and actor["rating"] >= 4 :
+            cnt_actor_hi_rated += 1
+ 
+    # Movie stats
+    print("")
+    print("Total number of movies: ", len(moviedb.arrMovies))
     print("Number of movies played: ", cnt_played)
-    print("Number of high rated movies: ", cnt_high_rated)
+    print("Number of movies rated: ", cnt_rated)
+    print("Number of hi rated movies: ", cnt_hi_rated)
+
+    # Actor stats
+    print("Total number of actors: ", len(actordb.arrActors))
+    print("Number of unplayed actors: ", cnt_actor_unplayed )
+    print("Number of hi rated actors: ", cnt_actor_hi_rated )
 
 
 if __name__ == "__main__":
