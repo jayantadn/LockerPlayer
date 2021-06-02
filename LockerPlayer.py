@@ -500,63 +500,65 @@ def show_menu_other():
     while True : menu.show()
     
 
-# noinspection SpellCheckingInspection
+# post play menu
 def show_menu_postplay(rel_path):
-    # post play menu
-
     idxMovie = moviedb.getIdxMovie(rel_path)
 
-    while True:
-        post_play = input('''
-1. Rate movie   2. Repeat actor     3. Update stats       4. Delete movie
-5. Delete actor 6. Rate actor       0. Main Menu
-Enter your choice: ''')
+    menu = Menu(show_menu_main)
+    
+    menu.add( MenuItem( "Repeat actor", lambda : play_actor(moviedb.arrMovies[idxMovie]["actor"]) ) ) 
 
-        if post_play == "1":  # rating
-            rating = input("Enter your rating: ")
-            moviedb.update(moviedb.arrMovies[idxMovie]["rel_path"], "rating", rating)
+    def irate_movie() :
+        rating = input("Enter your rating: ")
+        moviedb.update(moviedb.arrMovies[idxMovie]["rel_path"], "rating", rating)
+    menu.add( MenuItem( "Rate movie", irate_movie) )
+    
+    def irate_actor() :
+        actor = moviedb.arrMovies[idxMovie]["actor"]
+        rating = input("Please enter rating for actor " + actor + " : ")
+        actordb.rate(actor, rating)
+    menu.add( MenuItem( "Rate actor", irate_actor) )
 
-        elif post_play == "2":  # repeat actor
-            play_actor(moviedb.arrMovies[idxMovie]["actor"])
+    def idelete_movie() :
+        delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
+        if delete == "1":
+            delete_movie(rel_path)
+        show_menu_main() # movie index has changed, other menu items here wont work as expected
+    menu.add( MenuItem( "Delete movie", idelete_movie) )
 
-        elif post_play == "3":  # update stats
-            print("Current stats:")
-            for key, val in moviedb.arrMovies[idxMovie].items():
-                if key != "rel_path":
-                    print(key.ljust(10), val)
-            print("0".ljust(10), "Go back")
-            key = input("Which field do you want to update: ")
-            if key != "0":
-                val = input("Please enter new value: ")
-                moviedb.update(rel_path, key, val)
-
-        elif post_play == "4":  # delete movie
-            delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
-            if delete == "1":
+    def idelete_actor() :
+        actor = moviedb.arrMovies[idxMovie]["actor"]
+        print("Are you sure to delete all movies of", actor, "?")
+        delete = input("1. Yes\t 2. No ")
+        if delete == "1":
+            arrDelete = []
+            for movie in moviedb.arrMovies:
+                if movie["actor"] == actor:
+                    arrDelete.append(movie["rel_path"])
+            for rel_path in arrDelete:
                 delete_movie(rel_path)
-
-        elif post_play == "5":  # delete actor
-            actor = moviedb.arrMovies[idxMovie]["actor"]
-            print("Are you sure to delete all movies of", actor, "?")
-            delete = input("1. Yes\t 2. No ")
-            if delete == "1":
-                arrDelete = []
-                for movie in moviedb.arrMovies:
-                    if movie["actor"] == actor:
-                        arrDelete.append(movie["rel_path"])
-                for rel_path in arrDelete:
-                    delete_movie(rel_path)
-
-        elif post_play == "6":  # rate actor
-            actor = moviedb.arrMovies[idxMovie]["actor"]
-            rating = input("Please enter rating for actor " + actor + " : ")
-            actordb.rate(actor, rating)
-
-        elif post_play == "0":
-            show_menu_main()
-
-        else:
-            print("ERROR: Invalid choice")
+        show_menu_main() # movie index has changed, other menu items here wont work as expected
+    menu.add( MenuItem( "Delete actor", idelete_actor) )
+    
+    def iupdate_stats() :
+        entry = 1
+        for key, val in moviedb.arrMovies[idxMovie].items():
+            if key != "rel_path" and key != "timestamp":
+                print(entry, key.ljust(10), val)
+                entry += 1
+        print(0, "Go back..")
+        choice = int( input("Which field do you want to update: ") )
+        entry = 1
+        for key, val in moviedb.arrMovies[idxMovie].items():
+            if key != "rel_path" and key != "timestamp":
+                if entry == choice :
+                    val = input("Please enter new value for " + key + " : ")
+                    moviedb.update(rel_path, key, val)
+                    break
+                entry += 1
+    menu.add( MenuItem( "Update stats", iupdate_stats) )
+    
+    while True : menu.show()
 
 
 def show_stats_actor(actor):
