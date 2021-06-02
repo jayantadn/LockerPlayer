@@ -20,22 +20,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# A custom assert implementation
+def myassert(expr, msg) :
+    if not expr :
+        print("ERROR: " + msg)
+        input("Press enter to exit...")
+        exit(1)
+        
+        
 # import external modules
-import sys
-import os
-import shutil
-import time
-import random
-import traceback
-from send2trash import send2trash
-import getpass
-import subprocess
-import progressbar # pip install progressbar2
-
+try :
+    import sys
+    import os
+    import shutil
+    import time
+    import random
+    import traceback
+    from send2trash import send2trash
+    import getpass
+    import subprocess
+    import progressbar # pip install progressbar2
+except :
+    myassert(False, "Import failed")
+    
 # import internal modules
 from const import *
 from moviedb import MOVIEDB
 from actordb import ACTORDB
+from Menu import *
 
 # global variables
 CONFIG = dict()
@@ -44,14 +56,6 @@ actordb = ACTORDB()
 
 
 # --- all function definitions ---
-
-# A custom assert implementation
-def myassert(expr, msg) :
-    if not expr :
-        print("ERROR: " + msg)
-        input("Press enter to exit...")
-        exit(1)
-        
 
 def copy_hi_movies():
     """Copy high rated movies to another location"""
@@ -71,15 +75,14 @@ def copy_hi_movies():
             if not os.path.exists(dest):
                 filelist.append( [src, dest] )
 
-    # select your favorite copy utility
+    # select xcopy if exists
     copy = None
     try :
         subprocess.check_output(["where", "xcopy"])
         copy = "xcopy"
-        print("Using XCopy to copy files")
     except :
-        print("Using python built in copy")
-    
+        pass
+        
     # perform copy
     for fileset in progressbar.progressbar(filelist) :
         if not os.path.exists( os.path.dirname( fileset[1] ) ) :
@@ -88,6 +91,7 @@ def copy_hi_movies():
             subprocess.run( [ "xcopy", fileset[0], os.path.dirname(fileset[1]), "/j/q" ], stdout=subprocess.DEVNULL )
         else :
             shutil.copy2( fileset[0], fileset[1] )
+            
             
 def delete_movie(rel_path) :
     print("deleting file: ", rel_path)
@@ -109,6 +113,7 @@ def fix_actor_db():
         if not found :
             print("Removing actor as no movies found:", actor["name"])
             actordb.remove(actor["name"])
+
 
 def fix_movie_folder():
     """fix problems in the movie folder"""
@@ -475,55 +480,25 @@ def refresh_db():
 def show_menu_main():
     """show the main menu"""
 
-    while True:
-        choice_main = input('''
-1. Play a random file         2. Play unrated movie
-3. Play a high rated movie    4. Play by actor
-5. Play random actor          6. Other options
-7. Play high rated actor
-0: Exit
-Enter your choice: ''')
-
-        if choice_main == "1":
-            play_random()
-        elif choice_main == "2":
-            play_unrated()
-        elif choice_main == "3":
-            play_rated()
-        elif choice_main == "4":
-            play_actor()
-        elif choice_main == "5":
-            play_random_actor()
-        elif choice_main == "6":
-            show_menu_other()
-        elif choice_main == "7":
-            play_rated_actor()
-        elif choice_main == "0":
-            exit()
-        else:
-            print( "Invalid choice" );
-
+    menu = Menu()
+    menu.add( MenuItem( "Play a random file", play_random ) )
+    menu.add( MenuItem( "Play a hi rated movie", play_rated ) )
+    menu.add( MenuItem( "Play selected actor", play_actor ) )
+    menu.add( MenuItem( "Play a high rated actor", play_rated_actor ) )
+    menu.add( MenuItem( "Play random actor", play_random_actor ) )
+    menu.add( MenuItem( "Other options", show_menu_other ) )
+    while True : menu.show()
+    
 
 def show_menu_other():
-    """show the other menu"""
+    """show menu which could not fit into main menu"""
 
-    while True:
-        choice_other = input('''
-1. Refresh database         2. Show statistics
-3. Copy high rated movies   0. Main Menu
-Enter your choice: ''')
-
-        if choice_other == "1":
-            refresh_db()
-        elif choice_other == "2":
-            show_stats_overall()
-        elif choice_other == "3":
-            copy_hi_movies()
-        elif choice_other == "0":
-            show_menu_main()
-        else:
-            print( "Invalid choice" );
-
+    menu = Menu(show_menu_main)
+    menu.add( MenuItem( "Refresh database", refresh_db ) )
+    menu.add( MenuItem( "Show overall statistics", show_stats_overall ) )
+    menu.add( MenuItem( "Copy high rated movies", copy_hi_movies ) )
+    while True : menu.show()
+    
 
 # noinspection SpellCheckingInspection
 def show_menu_postplay(rel_path):
@@ -613,7 +588,7 @@ def show_stats_overall():
             cnt_played += 1
         if movie["rating"] is not None and int(movie["rating"]) >= 4:
             cnt_high_rated += 1
-    print("Total number of movies: ", len(moviedb.arrMovies))
+    print("\nTotal number of movies: ", len(moviedb.arrMovies))
     print("Number of movies played: ", cnt_played)
     print("Number of high rated movies: ", cnt_high_rated)
 
