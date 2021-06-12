@@ -18,15 +18,7 @@
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-# A custom assert implementation
-def myassert(expr, msg) :
-    if not expr :
-        print("ERROR: " + msg)
-        input("Press enter to exit...")
-        exit(1)
-        
+# SOFTWARE.      
         
 # import external modules
 try :
@@ -42,7 +34,7 @@ try :
     import progressbar # pip install progressbar2
     import hashlib
 except :
-    myassert(False, "Import failed")
+    assert False, "Import failed"
     
 # import internal modules
 from const import *
@@ -231,7 +223,7 @@ def init():
         passwd = getpass.getpass()
         h = hashlib.md5()
         h.update(passwd.encode("utf-8"))
-        if not h.hexdigest() == "76a2173be6393254e72ffa4d6df1030a" :
+        if not h.hexdigest() == "38af902888ee1bd2e00b779ee36aa979" :
             print("Invalid password. Try again.")
         else:
             break
@@ -356,9 +348,8 @@ def play_unplayed_actor() :
     play_random_actor(actorlist)
 
 
+# play the movie and update stats
 def play_file(rel_path):
-    """play the movie and update stats"""
-
     assert os.path.exists( os.path.join(CONFIG["MOVIEDIR"], rel_path) ), "File not found"
 
     idxMovie = moviedb.getIdxMovie(rel_path)
@@ -366,14 +357,13 @@ def play_file(rel_path):
     playcount = int(moviedb.arrMovies[idxMovie]["playcount"]) + 1
     moviedb.update(moviedb.arrMovies[idxMovie]["rel_path"], "playcount", playcount)
 
-    os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"],
-        moviedb.arrMovies[idxMovie]["rel_path"]))
+    os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], moviedb.arrMovies[idxMovie]["rel_path"]))
 
     show_menu_postplay(rel_path)
 
+
 def play_random(arrMovies = moviedb.arrMovies) :
-    assert len(arrMovies) > 0, \
-        "[ERROR] No movies found"
+    assert len(arrMovies) > 0, "[ERROR] No movies found"
 
     while True:
         # get a random file
@@ -384,10 +374,10 @@ def play_random(arrMovies = moviedb.arrMovies) :
         
         # play the movie on user request
         choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
-        if choice == "1":
+        if choice == "1":   #Play
             play_file(arrMovies[idx]["rel_path"])
 
-        elif choice == "2":
+        elif choice == "2": # Retry
             continue
 
         elif choice == "0" :
@@ -522,6 +512,7 @@ def show_menu_other():
     menu.add( MenuItem( "Refresh database", refresh_db ) )
     menu.add( MenuItem( "Show overall statistics", show_stats_overall ) )
     menu.add( MenuItem( "Copy high rated movies", copy_hi_movies ) )
+    menu.add( MenuItem( "Show play history", show_play_history ) )
     while True : menu.show()
     
 
@@ -547,7 +538,7 @@ def show_menu_actor():
 
 
 # post play menu
-def show_menu_postplay(rel_path):
+def show_menu_postplay(rel_path, back=False):
     idxMovie = moviedb.getIdxMovie(rel_path)
 
     menu = Menu(show_menu_main)
@@ -579,8 +570,12 @@ def show_menu_postplay(rel_path):
         if delete == "1":
             arrDelete = []
             for movie in moviedb.arrMovies:
-                if movie["actor"] == actor:
-                    arrDelete.append(movie["rel_path"])
+                if movie["actor"] == actor :
+                    if movie["rating"] is None :
+                        arrDelete.append(movie["rel_path"])
+                    else :
+                        if movie["rating"] < 4 :
+                            arrDelete.append(movie["rel_path"])
             for rel_path in arrDelete:
                 delete_movie(rel_path)
         show_menu_main() # movie index has changed, other menu items here wont work as expected
@@ -632,6 +627,17 @@ def show_stats_actor(actorname):
     print("Movies rated for this actor:", cnt_rated)
 
 
+# Show statistics for a given movie
+def show_stats_movie(movie):
+    print("")
+    print("Selected movie: ", os.path.basename(movie["rel_path"]))
+    print("Actor: ", movie["actor"])
+    print("Category: ", movie["category"])
+    print("Play count: ", movie["playcount"])
+    print("Movie Rating: ", movie["rating"])
+
+
+
 def show_stats_overall():
     """Show statistics about the movie database"""
     
@@ -671,6 +677,36 @@ def show_stats_overall():
     print("Number of unplayed actors: ", cnt_actor_unplayed )
     print("Number of hi rated actors: ", cnt_actor_hi_rated )
 
+
+# Displas the last movie played. From there you can jump to Prev or Next movie.
+def show_play_history() :
+    moviedb.arrMovies.sort( reverse = True, key = lambda movie : movie["timestamp"] )
+    i = 0
+    while i < len(moviedb.arrMovies) :
+        if i < 0 :
+            i = 0
+            
+        show_stats_movie( moviedb.arrMovies[i] )
+        
+        choice = input( "\n1. Preview\t 2. Prev\t 3. Next\t 4. Play\t 0. Go back.. \nEnter your choice: ")
+        if choice == "1":   # Preview
+            os.system(CONFIG["PLAYER"] + " " + os.path.join(CONFIG["MOVIEDIR"], moviedb.arrMovies[i]["rel_path"]))
+
+        elif choice == "2": # Prev
+            i += 1
+
+        elif choice == "3": # Next
+            i -= 1
+
+        elif choice == "4": # Play
+            play_file(moviedb.arrMovies[i]["rel_path"])
+
+        elif choice == "0" :
+            show_menu_main()
+
+        else :
+            print( "ERROR: Invalid choice" )
+            
 
 if __name__ == "__main__":
     """program entry point"""
