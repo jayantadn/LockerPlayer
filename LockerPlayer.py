@@ -380,12 +380,9 @@ def play_random(arrMovies = moviedb.arrMovies) :
         idx = random.randrange(0, len(arrMovies), 1)
 
         # print stats for the file
-        print("")
-        print("We found the following movie for you:")
-        print("title = ", os.path.basename(arrMovies[idx]["rel_path"]))
-        print("category = ", arrMovies[idx]["category"])
-        print("rating = ", arrMovies[idx]["rating"])
-
+        show_stats_movie( arrMovies[idx] )
+        
+        # play the movie on user request
         choice = input( "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
             play_file(arrMovies[idx]["rel_path"])
