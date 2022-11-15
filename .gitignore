@@ -1,4 +1,3 @@
 /__pycache__
-/database.json
-.idea
-moviedb.xlsx
+credentials.json
+token.json
