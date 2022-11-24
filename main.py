@@ -22,7 +22,7 @@ df_lockerdb = pandas.DataFrame()
 def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
-    gc = gspread.oauth(credentials_filename='credentials.json')
+    gc = gspread.oauth(credentials_filename='credentials.json', authorized_user_filename='token.json')
     sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
     ws = sheet.get_worksheet(0)
     df_lockerdb = pandas.DataFrame(ws.get_all_records())
