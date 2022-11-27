@@ -47,6 +47,63 @@ def play_file(idxMovie):
     show_menu_postplay(idxMovie)
 
 
+# Play movies for a given actor. If no actor specified, prompt for one.
+def play_actor(actor=None):
+    # generate list of actors
+    list_actors = df_lockerdb['actor'].drop_duplicates().to_list()
+
+    # if no actor is specified, prompt for the actor name.
+    # partial match is ok. list all actors matching the name.
+    if actor is None:
+        a = input("Actor name: ")
+        arrActor = []
+        for al in list_actors:
+            if a in al and al not in arrActor:
+                arrActor.append(al)
+
+        # If no match, throw error
+        # if single match, then trouble free
+        # if multiple match, then prompt to select one
+        assert len(arrActor) != 0, "No such actor found"
+        if len(arrActor) == 1:
+            actor = arrActor[0]
+        else:
+            for i, actor in enumerate(arrActor):
+                print(i, actor)
+            print(i+1, "Go back")
+            i = int(input("Please select an actor: "))
+            assert 0 <= i <= len(arrActor), "Invalid input"
+            if i == len(arrActor):
+                return  # Go back
+            actor = arrActor[i]
+
+    # select a random movie for the actor
+    select = df_lockerdb['actor'] == actor
+    while True:
+        nrows, _ = df_lockerdb[select].shape
+        # get a random file
+        idx = random.randrange(0, nrows, 1)
+
+        # print stats for the file
+        myprint(df_lockerdb[select].iloc[idx])
+
+        # # play the movie on user request
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":  # Play
+            idxMovie = df_lockerdb[select].iloc[idx, 0]
+            play_file(idxMovie)
+            break
+        elif choice == "2":  # Retry
+            continue
+        elif choice == "0":
+            show_menu_main()
+            break
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+
 def play_random():
     while True:
         nrows, _ = df_lockerdb.shape
@@ -61,14 +118,12 @@ def play_random():
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
             play_file(idx)
-
+            break
         elif choice == "2":  # Retry
             continue
-
         elif choice == "0":
             show_menu_main()
             break
-
         else:
             print("ERROR: Invalid choice")
             break
@@ -164,10 +219,23 @@ def show_menu_movie():
         menu.show()
 
 
+def show_menu_actor():
+    """show menu to select an actor"""
+
+    menu = Menu()
+    menu.add(MenuItem("Play selected actor", play_actor))
+    # menu.add( MenuItem( "Play random actor", play_random_actor ) )
+    # menu.add( MenuItem( "Play a high rated actor", play_rated_actor ) )
+    # menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
+    # menu.add( MenuItem( "Play an actor never played before", play_unplayed_actor ) )
+    while True:
+        menu.show()
+
+
 def show_menu_main():
     menu = Menu()
     menu.add(MenuItem("Play by movie", show_menu_movie))
-    # menu.add( MenuItem( "Play by actor", show_menu_actor ) )
+    menu.add(MenuItem("Play by actor", show_menu_actor))
     # menu.add( MenuItem( "Other options", show_menu_other ) )
     while True:
         menu.show()
