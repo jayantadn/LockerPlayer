@@ -132,8 +132,8 @@ def play_random():
 def show_menu_postplay(idxMovie, back=False):
     menu = Menu(show_menu_main)
 
-    # menu.add(MenuItem("Repeat actor", lambda: play_actor(
-    #     moviedb.arrMovies[idxMovie]["actor"])))
+    actor = df_lockerdb.loc[idxMovie, 'actor']
+    menu.add(MenuItem("Repeat actor", lambda: play_actor(actor)))
 
     def iupdate_stats():
         list_fields = df_lockerdb.columns.tolist()
