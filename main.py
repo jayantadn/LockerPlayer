@@ -129,6 +129,45 @@ def play_random():
             break
 
 
+def play_random_actor():
+    list_actors = df_lockerdb['actor'].drop_duplicates().to_list()
+
+    while True:
+        idx = random.randrange(0, len(list_actors), 1)
+        actor = list_actors[idx]
+        if actor is not None and not actor == "Unknown":
+            show_stats_actor(actor)
+
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":
+            play_actor(actor)
+        elif choice == "2":
+            continue
+        elif choice == "0":
+            show_menu_main()
+            break
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+
+def show_stats_actor(actorname):
+    # calculate number of movies
+    select = df_lockerdb["actor"] == actorname
+    col = df_lockerdb.columns.get_loc(
+        'actor_rating')  # get column index from name
+    cnt_movies, _ = df_lockerdb[select].shape
+
+    # print all values
+    print("")
+    print("Selected actor:", actorname)
+    print("Actor rating:", df_lockerdb[select].iloc[0, col])
+    print("Total movies of this actor:", cnt_movies)
+    print("Movies played for this actor:",
+          df_lockerdb[select]['playcount'].sum())
+
+
 def show_menu_postplay(idxMovie, back=False):
     menu = Menu(show_menu_main)
 
@@ -144,7 +183,8 @@ def show_menu_postplay(idxMovie, back=False):
         if list_fields[col] == 'movie_rating':
             df_lockerdb.iat[idxMovie, col] = int(value)
         if list_fields[col] == 'actor_rating':
-            col_actor = df_lockerdb.columns.get_loc('actor')
+            col_actor = df_lockerdb.columns.get_loc(
+                'actor')  # get column index from name
             actor = df_lockerdb.iat[idxMovie, col_actor]
             select = df_lockerdb['actor'] == actor
             list_select = df_lockerdb[select].index.to_list()
@@ -224,7 +264,7 @@ def show_menu_actor():
 
     menu = Menu()
     menu.add(MenuItem("Play selected actor", play_actor))
-    # menu.add( MenuItem( "Play random actor", play_random_actor ) )
+    menu.add(MenuItem("Play random actor", play_random_actor))
     # menu.add( MenuItem( "Play a high rated actor", play_rated_actor ) )
     # menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
     # menu.add( MenuItem( "Play an actor never played before", play_unplayed_actor ) )
