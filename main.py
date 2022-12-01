@@ -40,7 +40,9 @@ def play_file(idxMovie):
     df_lockerdb.iat[idxMovie, col] = df_lockerdb.iat[idxMovie, col] + 1
 
     # open player
-    cmd = config["DEFAULT"]["PLAYER"] + " " + \
+    player = config["DEFAULT"]["PLAYER"]
+    # myassert(os.path.exists(player), "Movie player not found") #FIXME: unable to handle path with spaces
+    cmd = f"{player} " + \
         os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
     os.system(cmd)
 
@@ -252,7 +254,6 @@ def show_menu_postplay(idxMovie, back=False):
 
 def show_menu_movie():
     menu = Menu()
-    menu.add(MenuItem("Play a random movie", play_random))
     # menu.add( MenuItem( "Play a hi rated movie", play_rated ) )
     # menu.add( MenuItem( "Play an unrated movie", play_unrated ) )
     while True:
@@ -274,6 +275,7 @@ def show_menu_actor():
 
 def show_menu_main():
     menu = Menu()
+    menu.add(MenuItem("Play a random movie", play_random))
     menu.add(MenuItem("Play by movie", show_menu_movie))
     menu.add(MenuItem("Play by actor", show_menu_actor))
     # menu.add( MenuItem( "Other options", show_menu_other ) )
