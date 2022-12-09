@@ -184,7 +184,7 @@ def show_menu_postplay(idxMovie, back=False):
         value = input("Enter value: ")
         if list_fields[col] == 'movie_rating':
             df_lockerdb.iat[idxMovie, col] = int(value)
-        if list_fields[col] == 'actor_rating':
+        elif list_fields[col] == 'actor_rating':
             col_actor = df_lockerdb.columns.get_loc(
                 'actor')  # get column index from name
             actor = df_lockerdb.iat[idxMovie, col_actor]
