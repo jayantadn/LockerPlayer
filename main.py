@@ -7,6 +7,7 @@ import pandas
 import os.path
 import configparser
 import random
+from send2trash import send2trash
 
 # import custom packages
 from Utils import *
@@ -170,6 +171,12 @@ def show_stats_actor(actorname):
           df_lockerdb[select]['playcount'].sum())
 
 
+def delete_movie(idxMovie):
+    rel_path = df_lockerdb.loc[idxMovie, 'rel_path']
+    print("deleting file: ", rel_path)
+    send2trash(os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path))
+    df_lockerdb.drop(idxMovie, inplace=True)
+
 def show_menu_postplay(idxMovie, back=False):
     menu = Menu(show_menu_main)
 
@@ -204,12 +211,12 @@ def show_menu_postplay(idxMovie, back=False):
     #     actordb.rate(actor, rating)
     # menu.add(MenuItem("Rate actor", irate_actor))
 
-    # def idelete_movie():
-    #     delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
-    #     if delete == "1":
-    #         delete_movie(rel_path)
-    #     show_menu_main()  # movie index has changed, other menu items here wont work as expected
-    # menu.add(MenuItem("Delete movie", idelete_movie))
+    def idelete_movie():
+        delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
+        if delete == "1":
+            delete_movie(idxMovie)
+        # show_menu_main()  # movie index has changed, other menu items here wont work as expected
+    menu.add(MenuItem("Delete movie", idelete_movie))
 
     # def idelete_actor():
     #     actor = moviedb.arrMovies[idxMovie]["actor"]
