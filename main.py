@@ -184,6 +184,10 @@ def show_menu_postplay(idxMovie, back=False):
     menu.add(MenuItem("Repeat actor", lambda: play_actor(actor)))
 
     def iupdate_stats():
+        try:
+            df_lockerdb.at[idxMovie]
+        except:
+            print("File does not exist")
         list_fields = df_lockerdb.columns.tolist()
         for i, field in enumerate(list_fields):
             print(i, field)
@@ -215,7 +219,6 @@ def show_menu_postplay(idxMovie, back=False):
         delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
         if delete == "1":
             delete_movie(idxMovie)
-        # show_menu_main()  # movie index has changed, other menu items here wont work as expected
     menu.add(MenuItem("Delete movie", idelete_movie))
 
     # def idelete_actor():
