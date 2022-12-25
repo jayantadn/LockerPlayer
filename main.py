@@ -47,8 +47,11 @@ def play_file(idxMovie):
     # filename validation
     col = df_lockerdb.columns.get_loc('rel_path')
     rel_path = df_lockerdb.iat[idxMovie, col]
-    myassert(os.path.exists(os.path.join(
-        config["DEFAULT"]["MOVIEDIR"], rel_path)), "File not found")
+    movie = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    if not os.path.exists(movie):
+        print("ERROR: File not found")
+        # TODO: remove entry from database
+        return
 
     # increment the playcount
     col = df_lockerdb.columns.get_loc('playcount')
@@ -57,8 +60,8 @@ def play_file(idxMovie):
     # open player
     player = config["DEFAULT"]["PLAYER"]
     # myassert(os.path.exists(player), "Movie player not found") #FIXME: unable to handle path with spaces
-    cmd = f"{player} " + \
-        os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    print(f"Playing movie: {movie}")
+    cmd = f"{player} " + movie
     os.system(cmd)
 
     show_menu_postplay(idxMovie)
@@ -235,23 +238,16 @@ def show_menu_postplay(idxMovie, back=False):
             delete_movie(idxMovie)
     menu.add(MenuItem("Delete movie", idelete_movie))
 
-    # def idelete_actor():
-    #     actor = moviedb.arrMovies[idxMovie]["actor"]
-    #     print("Are you sure to delete all movies of", actor, "?")
-    #     delete = input("1. Yes\t 2. No ")
-    #     if delete == "1":
-    #         arrDelete = []
-    #         for movie in moviedb.arrMovies:
-    #             if movie["actor"] == actor:
-    #                 if movie["rating"] is None:
-    #                     arrDelete.append(movie["rel_path"])
-    #                 else:
-    #                     if movie["rating"] < 4:
-    #                         arrDelete.append(movie["rel_path"])
-    #         for rel_path in arrDelete:
-    #             delete_movie(rel_path)
-    #     show_menu_main()  # movie index has changed, other menu items here wont work as expected
-    # menu.add(MenuItem("Delete actor", idelete_actor))
+    def idelete_actor():
+        print("Are you sure to delete all movies of", actor, "?")
+        delete = input("1. Yes\t 2. No ")
+        if delete == "1":
+            # FIXME: exclude movies with high rating
+            select = df_lockerdb['actor'] == actor
+            arrDelete = df_lockerdb[select].index.to_list()
+            for idx in arrDelete:
+                delete_movie(idx)
+            menu.add(MenuItem("Delete actor", idelete_actor))
 
     # def iupdate_stats():
     #     entry = 1
