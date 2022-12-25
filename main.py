@@ -12,6 +12,7 @@ from send2trash import send2trash
 # import custom packages
 from Utils import *
 from Menu import *
+from const import *
 
 # globals
 config = configparser.ConfigParser()
@@ -23,7 +24,20 @@ df_lockerdb = pandas.DataFrame()
 def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
-    gc = gspread.oauth(credentials_filename='credentials.json', authorized_user_filename='token.json')
+
+    if not os.path.exists(os.path.join(CURDIR, 'credentials.json')):
+        print("'credentials.json' does not exist")
+        print("Please download the google credentials to the current path")
+        return
+
+    try:
+        gc = gspread.oauth(credentials_filename='credentials.json',
+                           authorized_user_filename='token.json')
+    except:
+        os.remove(os.path.join(CURDIR, 'token.json'))
+        gc = gspread.oauth(credentials_filename='credentials.json',
+                           authorized_user_filename='token.json')
+
     sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
     ws = sheet.get_worksheet(0)
     df_lockerdb = pandas.DataFrame(ws.get_all_records())
