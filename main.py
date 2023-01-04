@@ -42,6 +42,9 @@ def gsheet_init():
     ws = sheet.get_worksheet(0)
     df_lockerdb = pandas.DataFrame(ws.get_all_records())
 
+    # reset the index
+    df_lockerdb.set_index('rel_path', inplace=True)
+
 
 def play_file(idxMovie):
     # filename validation
@@ -64,7 +67,7 @@ def play_file(idxMovie):
     cmd = f"{player} " + movie
     os.system(cmd)
 
-    show_menu_postplay(idxMovie)
+    # show_menu_postplay(idxMovie)
 
 
 # Play movies for a given actor. If no actor specified, prompt for one.
@@ -124,7 +127,7 @@ def play_actor(actor=None):
             break
 
 
-def play_random():
+def play_random_movie():
     while True:
         nrows, _ = df_lockerdb.shape
         # get a random file
@@ -133,7 +136,7 @@ def play_random():
         # print stats for the file
         myprint(df_lockerdb.iloc[idx])
 
-        # # play the movie on user request
+        # play the movie on user request
         choice = input(
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
@@ -295,9 +298,9 @@ def show_menu_actor():
 
 def show_menu_main():
     menu = Menu()
-    menu.add(MenuItem("Play a random movie", play_random))
-    menu.add(MenuItem("Play by movie", show_menu_movie))
-    menu.add(MenuItem("Play by actor", show_menu_actor))
+    menu.add(MenuItem("Play a random movie", play_random_movie))
+    # menu.add(MenuItem("Play by movie", show_menu_movie))
+    # menu.add(MenuItem("Play by actor", show_menu_actor))
     # menu.add( MenuItem( "Other options", show_menu_other ) )
     while True:
         menu.show()
@@ -309,6 +312,10 @@ def write_database():
                        authorized_user_filename='token.json')
     sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
     ws = sheet.get_worksheet(0)
+
+    # reset index
+    myassert(False, "not supported yet")
+
     ws.update([df_lockerdb.columns.values.tolist()] +
               df_lockerdb.values.tolist())
 
