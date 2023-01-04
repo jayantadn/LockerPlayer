@@ -10,8 +10,8 @@ import random
 from send2trash import send2trash
 
 # import custom packages
-from Utils import *
-from Menu import *
+from utils import *
+from menu import *
 from const import *
 
 # globals
@@ -200,10 +200,6 @@ def show_menu_postplay(rel_path, back=False):
     menu.add(MenuItem("Repeat actor", lambda: play_actor(actor)))
 
     def iupdate_stats():
-        try:
-            df_lockerdb.at[idxMovie]
-        except:
-            print("File does not exist")
         list_fields = df_lockerdb.columns.tolist()
         for i, field in enumerate(list_fields):
             print(i, field)
