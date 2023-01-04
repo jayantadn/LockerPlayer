@@ -62,7 +62,7 @@ def play_file(rel_path):
     cmd = f"{player} " + movie
     os.system(cmd)
 
-    # show_menu_postplay(idxMovie)
+    show_menu_postplay(rel_path)
 
 
 # Play movies for a given actor. If no actor specified, prompt for one.
@@ -192,10 +192,10 @@ def delete_movie(idxMovie):
     send2trash(os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path))
     df_lockerdb.drop(idxMovie, inplace=True)
 
-def show_menu_postplay(idxMovie, back=False):
+def show_menu_postplay(rel_path, back=False):
     menu = Menu(show_menu_main)
 
-    actor = df_lockerdb.loc[idxMovie, 'actor']
+    actor = df_lockerdb.at[rel_path, 'actor']
     menu.add(MenuItem("Repeat actor", lambda: play_actor(actor)))
 
     def iupdate_stats():
@@ -209,11 +209,9 @@ def show_menu_postplay(idxMovie, back=False):
         col = int(input("Select stat to update: "))
         value = input("Enter value: ")
         if list_fields[col] == 'movie_rating':
-            df_lockerdb.iat[idxMovie, col] = int(value)
+            df_lockerdb.at[rel_path, 'movie_rating'] = int(value)
         elif list_fields[col] == 'actor_rating':
-            col_actor = df_lockerdb.columns.get_loc(
-                'actor')  # get column index from name
-            actor = df_lockerdb.iat[idxMovie, col_actor]
+            actor = df_lockerdb.at[rel_path, 'actor']
             select = df_lockerdb['actor'] == actor
             list_select = df_lockerdb[select].index.to_list()
             arr = []
@@ -309,10 +307,11 @@ def write_database():
     ws = sheet.get_worksheet(0)
 
     # reset index
-    myassert(False, "not supported yet")
+    _df_lockerdb = df_lockerdb.reset_index(names='rel_path')
 
-    ws.update([df_lockerdb.columns.values.tolist()] +
-              df_lockerdb.values.tolist())
+    # write to server
+    ws.update([_df_lockerdb.columns.values.tolist()] +
+              _df_lockerdb.values.tolist())
 
 
 def main():
