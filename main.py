@@ -46,19 +46,14 @@ def gsheet_init():
     df_lockerdb.set_index('rel_path', inplace=True)
 
 
-def play_file(idxMovie):
+def play_file(rel_path):
     # filename validation
-    col = df_lockerdb.columns.get_loc('rel_path')
-    rel_path = df_lockerdb.iat[idxMovie, col]
-    movie = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
-    if not os.path.exists(movie):
-        print("ERROR: File not found")
-        # TODO: remove entry from database
-        return
+    myassert(os.path.exists(os.path.join(
+        config["DEFAULT"]["MOVIEDIR"], rel_path)), "File not found")
 
     # increment the playcount
-    col = df_lockerdb.columns.get_loc('playcount')
-    df_lockerdb.iat[idxMovie, col] = df_lockerdb.iat[idxMovie, col] + 1
+    df_lockerdb.at[rel_path,
+                   'playcount'] = df_lockerdb.at[rel_path, 'playcount'] + 1
 
     # open player
     player = config["DEFAULT"]["PLAYER"]
@@ -140,7 +135,7 @@ def play_random_movie():
         choice = input(
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
-            play_file(idx)
+            play_file(df_lockerdb.iloc[idx].name)
             break
         elif choice == "2":  # Retry
             continue
