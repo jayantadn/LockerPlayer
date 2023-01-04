@@ -58,6 +58,7 @@ def play_file(rel_path):
     # open player
     player = config["DEFAULT"]["PLAYER"]
     # myassert(os.path.exists(player), "Movie player not found") #FIXME: unable to handle path with spaces
+    movie = os.path.join(config['DEFAULT']['MOVIEDIR'], rel_path)
     print(f"Playing movie: {movie}")
     cmd = f"{player} " + movie
     os.system(cmd)
