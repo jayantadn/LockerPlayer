@@ -187,11 +187,10 @@ def show_stats_actor(actorname):
           df_lockerdb[select]['playcount'].sum())
 
 
-def delete_movie(idxMovie):
-    rel_path = df_lockerdb.loc[idxMovie, 'rel_path']
+def delete_movie(rel_path):
     print("deleting file: ", rel_path)
     send2trash(os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path))
-    df_lockerdb.drop(idxMovie, inplace=True)
+    df_lockerdb.drop(rel_path, inplace=True)
 
 def show_menu_postplay(rel_path, back=False):
     menu = Menu(show_menu_main)
@@ -228,7 +227,7 @@ def show_menu_postplay(rel_path, back=False):
     def idelete_movie():
         delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
         if delete == "1":
-            delete_movie(idxMovie)
+            delete_movie(rel_path)
     menu.add(MenuItem("Delete movie", idelete_movie))
 
     def idelete_actor():
