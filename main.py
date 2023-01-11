@@ -33,12 +33,13 @@ def gsheet_init():
     try:
         gc = gspread.oauth(credentials_filename='credentials.json',
                            authorized_user_filename='token.json')
+        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
     except:
         os.remove(os.path.join(CURDIR, 'token.json'))
         gc = gspread.oauth(credentials_filename='credentials.json',
                            authorized_user_filename='token.json')
+        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
 
-    sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
     ws = sheet.get_worksheet(0)
     df_lockerdb = pandas.DataFrame(ws.get_all_records())
 
@@ -48,8 +49,10 @@ def gsheet_init():
 
 def play_file(rel_path):
     # filename validation
-    myassert(os.path.exists(os.path.join(
-        config["DEFAULT"]["MOVIEDIR"], rel_path)), "File not found")
+    full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    if not os.path.exists(full_path):
+        print(f"File not found: {full_path}")
+        return
 
     # increment the playcount
     df_lockerdb.at[rel_path,
@@ -191,6 +194,7 @@ def delete_movie(rel_path):
     print("deleting file: ", rel_path)
     send2trash(os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path))
     df_lockerdb.drop(rel_path, inplace=True)
+
 
 def show_menu_postplay(rel_path, back=False):
     menu = Menu(show_menu_main)
