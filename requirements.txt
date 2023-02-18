@@ -3,5 +3,6 @@ oauth2client
 google-api-python-client 
 google-auth-httplib2 
 google-auth-oauthlib
-pandas
+pandas>=1.5.0
 configparser
+send2trash

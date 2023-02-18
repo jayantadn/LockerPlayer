@@ -7,10 +7,12 @@ import pandas
 import os.path
 import configparser
 import random
+from send2trash import send2trash
 
 # import custom packages
-from Utils import *
-from Menu import *
+from utils import *
+from menu import *
+from const import *
 
 # globals
 config = configparser.ConfigParser()
@@ -22,8 +24,22 @@ df_lockerdb = pandas.DataFrame()
 def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
-    gc = gspread.oauth(credentials_filename='credentials.json', authorized_user_filename='token.json')
-    sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+
+    if not os.path.exists(os.path.join(CURDIR, 'credentials.json')):
+        print("'credentials.json' does not exist")
+        print("Please download the google credentials to the current path")
+        return
+
+    try:
+        gc = gspread.oauth(credentials_filename='credentials.json',
+                           authorized_user_filename='token.json')
+        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+    except:
+        os.remove(os.path.join(CURDIR, 'token.json'))
+        gc = gspread.oauth(credentials_filename='credentials.json',
+                           authorized_user_filename='token.json')
+        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+
     ws = sheet.get_worksheet(0)
     df_lockerdb = pandas.DataFrame(ws.get_all_records())
 
@@ -33,8 +49,10 @@ def gsheet_init():
 
 def play_file(rel_path):
     # filename validation
-    myassert(os.path.exists(os.path.join(
-        config["DEFAULT"]["MOVIEDIR"], rel_path)), "File not found")
+    full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    if not os.path.exists(full_path):
+        print(f"File not found: {full_path}")
+        return
 
     # increment the playcount
     df_lockerdb.at[rel_path,
@@ -43,11 +61,12 @@ def play_file(rel_path):
     # open player
     player = config["DEFAULT"]["PLAYER"]
     # myassert(os.path.exists(player), "Movie player not found") #FIXME: unable to handle path with spaces
-    cmd = f"{player} " + \
-        os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    movie = os.path.join(config['DEFAULT']['MOVIEDIR'], rel_path)
+    print(f"Playing movie: {movie}")
+    cmd = f"{player} " + movie
     os.system(cmd)
 
-    # show_menu_postplay(idxMovie)
+    show_menu_postplay(rel_path)
 
 
 # Play movies for a given actor. If no actor specified, prompt for one.
@@ -171,10 +190,16 @@ def show_stats_actor(actorname):
           df_lockerdb[select]['playcount'].sum())
 
 
-def show_menu_postplay(idxMovie, back=False):
+def delete_movie(rel_path):
+    print("deleting file: ", rel_path)
+    send2trash(os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path))
+    df_lockerdb.drop(rel_path, inplace=True)
+
+
+def show_menu_postplay(rel_path, back=False):
     menu = Menu(show_menu_main)
 
-    actor = df_lockerdb.loc[idxMovie, 'actor']
+    actor = df_lockerdb.at[rel_path, 'actor']
     menu.add(MenuItem("Repeat actor", lambda: play_actor(actor)))
 
     def iupdate_stats():
@@ -184,11 +209,9 @@ def show_menu_postplay(idxMovie, back=False):
         col = int(input("Select stat to update: "))
         value = input("Enter value: ")
         if list_fields[col] == 'movie_rating':
-            df_lockerdb.iat[idxMovie, col] = int(value)
+            df_lockerdb.at[rel_path, 'movie_rating'] = int(value)
         elif list_fields[col] == 'actor_rating':
-            col_actor = df_lockerdb.columns.get_loc(
-                'actor')  # get column index from name
-            actor = df_lockerdb.iat[idxMovie, col_actor]
+            actor = df_lockerdb.at[rel_path, 'actor']
             select = df_lockerdb['actor'] == actor
             list_select = df_lockerdb[select].index.to_list()
             arr = []
@@ -205,30 +228,22 @@ def show_menu_postplay(idxMovie, back=False):
     #     actordb.rate(actor, rating)
     # menu.add(MenuItem("Rate actor", irate_actor))
 
-    # def idelete_movie():
-    #     delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
-    #     if delete == "1":
-    #         delete_movie(rel_path)
-    #     show_menu_main()  # movie index has changed, other menu items here wont work as expected
-    # menu.add(MenuItem("Delete movie", idelete_movie))
+    def idelete_movie():
+        delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
+        if delete == "1":
+            delete_movie(rel_path)
+    menu.add(MenuItem("Delete movie", idelete_movie))
 
-    # def idelete_actor():
-    #     actor = moviedb.arrMovies[idxMovie]["actor"]
-    #     print("Are you sure to delete all movies of", actor, "?")
-    #     delete = input("1. Yes\t 2. No ")
-    #     if delete == "1":
-    #         arrDelete = []
-    #         for movie in moviedb.arrMovies:
-    #             if movie["actor"] == actor:
-    #                 if movie["rating"] is None:
-    #                     arrDelete.append(movie["rel_path"])
-    #                 else:
-    #                     if movie["rating"] < 4:
-    #                         arrDelete.append(movie["rel_path"])
-    #         for rel_path in arrDelete:
-    #             delete_movie(rel_path)
-    #     show_menu_main()  # movie index has changed, other menu items here wont work as expected
-    # menu.add(MenuItem("Delete actor", idelete_actor))
+    def idelete_actor():
+        print("Are you sure to delete all movies of", actor, "?")
+        delete = input("1. Yes\t 2. No ")
+        if delete == "1":
+            # FIXME: exclude movies with high rating
+            select = df_lockerdb['actor'] == actor
+            arrDelete = df_lockerdb[select].index.to_list()
+            for idx in arrDelete:
+                delete_movie(idx)
+            menu.add(MenuItem("Delete actor", idelete_actor))
 
     # def iupdate_stats():
     #     entry = 1
@@ -292,10 +307,11 @@ def write_database():
     ws = sheet.get_worksheet(0)
 
     # reset index
-    myassert(False, "not supported yet")
+    _df_lockerdb = df_lockerdb.reset_index(names='rel_path')
 
-    ws.update([df_lockerdb.columns.values.tolist()] +
-              df_lockerdb.values.tolist())
+    # write to server
+    ws.update([_df_lockerdb.columns.values.tolist()] +
+              _df_lockerdb.values.tolist())
 
 
 def main():
