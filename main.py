@@ -113,8 +113,8 @@ def play_actor(actor=None):
         choice = input(
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
-            idxMovie = df_lockerdb[select].iloc[idx, 0]
-            play_file(idxMovie)
+            rel_path = df_lockerdb[select].iloc[idx].name
+            play_file(rel_path)
             break
         elif choice == "2":  # Retry
             continue
