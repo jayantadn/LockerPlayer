@@ -270,6 +270,7 @@ def show_menu_postplay(rel_path, back=False):
 
 def show_menu_movie():
     menu = Menu()
+    menu.add(MenuItem("Play a random movie", play_random_movie))
     # menu.add( MenuItem( "Play a hi rated movie", play_rated ) )
     # menu.add( MenuItem( "Play an unrated movie", play_unrated ) )
     while True:
@@ -280,8 +281,8 @@ def show_menu_actor():
     """show menu to select an actor"""
 
     menu = Menu()
-    menu.add(MenuItem("Play selected actor", play_actor))
     menu.add(MenuItem("Play random actor", play_random_actor))
+    menu.add(MenuItem("Play selected actor", play_actor))
     # menu.add( MenuItem( "Play a high rated actor", play_rated_actor ) )
     # menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
     # menu.add( MenuItem( "Play an actor never played before", play_unplayed_actor ) )
@@ -291,8 +292,8 @@ def show_menu_actor():
 
 def show_menu_main():
     menu = Menu()
-    menu.add(MenuItem("Play a random movie", play_random_movie))
-    # menu.add(MenuItem("Play by movie", show_menu_movie))
+    menu.add(MenuItem("Play random actor", play_random_actor))
+    menu.add(MenuItem("Play by movie", show_menu_movie))
     menu.add(MenuItem("Play by actor", show_menu_actor))
     # menu.add( MenuItem( "Other options", show_menu_other ) )
     while True:
