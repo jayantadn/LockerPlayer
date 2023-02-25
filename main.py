@@ -25,10 +25,10 @@ def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
 
-    if not os.path.exists(os.path.join(CURDIR, 'credentials.json')):
-        print("'credentials.json' does not exist")
+    if not os.path.exists(os.path.join(CURDIR, 'credentials.json')) or not os.path.exists(os.path.join(CURDIR, 'token.json')):
+        print("ERROR: 'credentials.json' or 'token.json' does not exist")
         print("Please download the google credentials to the current path")
-        return
+        exit(1)
 
     try:
         gc = gspread.oauth(credentials_filename='credentials.json',
@@ -293,7 +293,7 @@ def show_menu_main():
     menu = Menu()
     menu.add(MenuItem("Play a random movie", play_random_movie))
     # menu.add(MenuItem("Play by movie", show_menu_movie))
-    # menu.add(MenuItem("Play by actor", show_menu_actor))
+    menu.add(MenuItem("Play by actor", show_menu_actor))
     # menu.add( MenuItem( "Other options", show_menu_other ) )
     while True:
         menu.show()
