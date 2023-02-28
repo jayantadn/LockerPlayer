@@ -6,3 +6,5 @@ google-auth-oauthlib
 pandas>=1.5.0
 configparser
 send2trash
+datetime
+time
