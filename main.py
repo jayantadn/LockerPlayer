@@ -203,35 +203,35 @@ def add_movie(rel_path):
 
 
 def refresh_db():
-    fix_movie_folder()
+    # fix_movie_folder()
 
     # check for non-existent entries in database
-    arrDelete = []
-    for rel_path in df_lockerdb.index.to_list():
-        full_path = os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path)
-        if not os.path.exists(full_path):
-            arrDelete.append(rel_path)
-    if len(arrDelete) > 0:
-        for rel_path in arrDelete:
-            print(rel_path)
-        delete = input(
-            "The above files are not found in filesystem. Remove them from database?\n 1. Yes\t 2. No ")
-        if delete == "1":
-            for rel_path in arrDelete:
-                df_lockerdb.drop(rel_path, inplace=True)
-            print("Done removing files")
+    # arrDelete = []
+    # for rel_path in df_lockerdb.index.to_list():
+    #     full_path = os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path)
+    #     if not os.path.exists(full_path):
+    #         arrDelete.append(rel_path)
+    # if len(arrDelete) > 0:
+    #     for rel_path in arrDelete:
+    #         print(rel_path)
+    #     delete = input(
+    #         "The above files are not found in filesystem. Remove them from database?\n 1. Yes\t 2. No ")
+    #     if delete == "1":
+    #         for rel_path in arrDelete:
+    #             df_lockerdb.drop(rel_path, inplace=True)
+    #         print("Done removing files")
 
     # add any new files
-    for root, subdirs, files in os.walk(config['DEFAULT']["MOVIEDIR"]):
-        for file in files:
-            # add to database if not exist already
-            # assuming non-movie files are already deleted
-            path = os.path.join(root, file)
-            rel_path = path[len(config['DEFAULT']["MOVIEDIR"])::][1:]
-            if rel_path not in df_lockerdb.index.to_list():
-                add_movie(rel_path)
+    # for root, subdirs, files in os.walk(config['DEFAULT']["MOVIEDIR"]):
+    #     for file in files:
+    #         # add to database if not exist already
+    #         # assuming non-movie files are already deleted
+    #         path = os.path.join(root, file)
+    #         rel_path = path[len(config['DEFAULT']["MOVIEDIR"])::][1:]
+    #         if rel_path not in df_lockerdb.index.to_list():
+    #             add_movie(rel_path)
 
-    # write_database()
+    write_database()
     print("\nDatabase refresh completed.")
 
 
