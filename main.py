@@ -3,7 +3,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 # import standard packages
-import pandas
+import pandas as pd
 import os.path
 import configparser
 import random
@@ -18,7 +18,7 @@ from const import *
 config = configparser.ConfigParser()
 configfile = os.path.join(os.path.dirname(__file__), "config.ini")
 config.read(configfile)
-df_lockerdb = pandas.DataFrame()
+df_lockerdb = pd.DataFrame()
 
 
 def gsheet_init():
@@ -41,10 +41,166 @@ def gsheet_init():
         sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
 
     ws = sheet.get_worksheet(0)
-    df_lockerdb = pandas.DataFrame(ws.get_all_records())
+    df_lockerdb = pd.DataFrame(ws.get_all_records())
 
     # reset the index
     df_lockerdb.set_index('rel_path', inplace=True)
+
+    # treat data types
+    df_lockerdb.playcount = pd.to_numeric(df_lockerdb.playcount)
+    df_lockerdb.movie_rating = pd.to_numeric(df_lockerdb.movie_rating)
+    df_lockerdb.actor_rating = pd.to_numeric(df_lockerdb.actor_rating)
+
+
+def fix_movie_folder():
+    # strategy: fix movie folder should only fix problems in the movie folder.
+    # It should not touch the database.
+
+    # local variables
+    arr_filename_errors = []
+    arr_dirname_errors = []
+
+    # algorithm: try to print full path of all files. If some invalid
+    # characters are found in the filename, exception will be thrown.
+    # List the parent folder of such files. If parent folder name also has
+    # invalid characters, print the parent of parent.
+    # assumption: only movie name or movie folder names can have errors.
+    # Any other parent folder is very likely manually created.
+
+    # traverse through movie folder and check if all filenames are valid
+    arrDelete = []
+    arrCase = []
+    arrEmptyFolders = []
+    for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
+        if len(subdirs) + len(files) == 0:
+            arrEmptyFolders.append(root)
+
+        for file in files:
+            path = os.path.join(root, file)
+            try:
+                # extract the relative path
+                rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
+
+                # mark non movie files for delete
+                ext = os.path.splitext(path)[1]
+                if ext not in EXTLIST:
+                    arrDelete.append(rel_path)
+
+                # convert actor name to title case
+                folder1 = None
+                folder2 = None
+                head = path
+                while True:
+                    head, tail = os.path.split(head)
+                    folder2 = folder1
+                    folder1 = tail
+                    if head == CONFIG["MOVIEDIR"]:
+                        break
+                actor = folder2
+                if actor != actor.title():
+                    partpath = path[: path.find(actor) + len(actor)]
+                    if partpath not in arrCase:
+                        arrCase.append(partpath)
+
+            except UnicodeEncodeError:
+                arr_filename_errors.append(root)
+
+    # delete all empty folders
+    if len(arrEmptyFolders) > 0:
+        for folder in arrEmptyFolders:
+            print(folder)
+        confirm = input(
+            "\nThe above folders are empty and will be removed. Please confirm (y/n): ")
+        if confirm == "y":
+            for folder in arrEmptyFolders:
+                os.rmdir(folder)
+
+    # display the filename and dirname errors
+    if len(arr_filename_errors) > 0:
+        print("[WARNING] Invalid file or folder name found under:")
+        for pardir in arr_filename_errors:
+            try:
+                print(pardir)
+            except UnicodeEncodeError:
+                arr_dirname_errors.append(pardir)
+        for pardir in arr_dirname_errors:
+            try:
+                print(os.path.dirname(pardir))
+            except UnicodeEncodeError:
+                print("[WARNING] Invalid names found in some unidentified folders")
+        fix = input("Please fix the filenames manually. [F]ixed, [S]kip ")
+
+    # delete the non movie files
+    elif len(arrDelete) > 0:
+        for rel_path in arrDelete:
+            delete_movie(rel_path)
+
+    # change actor names to title case
+    elif len(arrCase) > 0:
+        print("The following path need to be changed to title case:")
+        for partpath in arrCase:
+            print(partpath)
+        cont = input("Do you want to continue?\n 1. Yes\t 2. No ")
+        if cont == "1":
+            # renaming first with _ suffix as windows does not allow
+            # case change in filename
+            for partpath in arrCase:
+                src = partpath
+                head, tail = os.path.split(partpath)
+                dest = os.path.join(head, tail.title())
+
+                os.rename(src, dest + "_")
+                time.sleep(1)
+            for partpath in arrCase:
+                head, tail = os.path.split(partpath)
+                src = os.path.join(head, tail.title() + "_")
+                os.rename(src, src[:-1])
+
+    else:
+        print("\nNo errors found")
+
+
+def refresh_db():
+    # fix_movie_folder()
+    # fix_actor_db()
+
+    # change actor names to title case
+    # for movie in moviedb.arrMovies:
+    #     if movie["actor"] != movie["actor"].title():
+    #         rel_path_new = movie["rel_path"].replace(movie["actor"],
+    #                                                  movie["actor"].title(), 1)
+    #         if os.path.exists(os.path.join(CONFIG["MOVIEDIR"], rel_path_new)):
+    #             moviedb.update(movie["rel_path"], "rel_path", rel_path_new)
+    #             moviedb.update(movie["rel_path"], "actor",
+    #                            movie["actor"].title())
+
+    # check for non-existent entries in database
+    # arrDelete = []
+    # for movie in moviedb.arrMovies:
+    #     full_path = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
+    #     if not os.path.exists(full_path):
+    #         arrDelete.append(movie["rel_path"])
+    # if len(arrDelete) > 0:
+    #     print("The following files will be removed from database.")
+    #     print("Please verify whether they actually exist in the filesystem")
+    #     for rel_path in arrDelete:
+    #         print(rel_path)
+    #     delete = input("Are you sure to delete them?\n 1. Yes\t 2. No ")
+    #     if delete == "1":
+    #         for rel_path in arrDelete:
+    #             delete_movie(rel_path)
+
+    # add any new files
+    # for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
+    #     for file in files:
+    #         # add to database if not exist already
+    #         # assuming non-movie files are already deleted
+    #         path = os.path.join(root, file)
+    #         rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
+    #         if not moviedb.exists(rel_path):
+    #             moviedb.add(rel_path)
+
+    print("\nDatabase refresh completed.")
 
 
 def play_file(rel_path):
@@ -289,12 +445,67 @@ def show_menu_actor():
         menu.show()
 
 
+def show_menu_other():
+    """show menu which could not fit into main menu"""
+
+    menu = Menu(show_menu_main)
+    menu.add(MenuItem("Refresh database", refresh_db))
+    menu.add(MenuItem("Show overall statistics", show_stats_overall))
+    # menu.add( MenuItem( "Copy high rated movies", copy_hi_movies ) )
+    # menu.add( MenuItem( "Show play history", show_play_history ) )
+    while True:
+        menu.show()
+
+
+def show_stats_overall():
+    # movie statistics
+    cnt_movies, _ = df_lockerdb.shape
+    cnt_played, _ = df_lockerdb[df_lockerdb.playcount > 0].shape
+    cnt_rated, _ = df_lockerdb[df_lockerdb.movie_rating > 0].shape
+    cnt_hi_rated, _ = df_lockerdb[df_lockerdb.movie_rating > 3].shape
+
+    # computations inside actor array
+    s_all_actors = df_lockerdb.actor.unique()
+    s_played_actors = df_lockerdb[df_lockerdb.playcount > 0].actor.unique()
+    cnt_actors = s_all_actors.size
+    cnt_actor_hi_rated = df_lockerdb[df_lockerdb.actor_rating > 4].actor.unique(
+    ).size
+    cnt_actor_unplayed = s_all_actors.size - s_played_actors.size
+    # compute unplayed actor
+
+    # cnt_actor_unplayed, cnt_actor_hi_rated = 0, 0
+    # for actor in actordb.arrActors:
+    #     cnt_movies = 0
+    #     for movie in moviedb.arrMovies:
+    #         if movie["actor"] == actor["name"]:
+    #             if movie["playcount"] > 0:
+    #                 break
+    #         cnt_movies += 1
+    #     if cnt_movies >= len(moviedb.arrMovies):
+    #         cnt_actor_unplayed += 1
+    #     if actor["rating"] is not None and actor["rating"] >= 4:
+    #         cnt_actor_hi_rated += 1
+
+    # Movie stats
+    print("\n---Movie stats---")
+    print("Total number of movies: ", cnt_movies)
+    print("Number of movies played: ", cnt_played)
+    print("Number of movies rated: ", cnt_rated)
+    print("Number of hi rated movies: ", cnt_hi_rated)
+
+    # Actor stats
+    print("---Actor stats---")
+    print("Total number of actors: ", cnt_actors)
+    print("Number of hi rated actors: ", cnt_actor_hi_rated)
+    print("Number of unplayed actors: ", cnt_actor_unplayed)
+
+
 def show_menu_main():
     menu = Menu()
     menu.add(MenuItem("Play a random movie", play_random_movie))
     # menu.add(MenuItem("Play by movie", show_menu_movie))
     # menu.add(MenuItem("Play by actor", show_menu_actor))
-    # menu.add( MenuItem( "Other options", show_menu_other ) )
+    menu.add(MenuItem("Other options", show_menu_other))
     while True:
         menu.show()
 
