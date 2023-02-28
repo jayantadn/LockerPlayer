@@ -553,6 +553,11 @@ def write_database():
     sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
     ws = sheet.get_worksheet(0)
 
+    # retreat data types
+    df_lockerdb.playcount = df_lockerdb.playcount.map(lambda x: str(x))
+    df_lockerdb.movie_rating = df_lockerdb.movie_rating.map(lambda x: str(x))
+    df_lockerdb.actor_rating = df_lockerdb.actor_rating.map(lambda x: str(x))
+
     # reset index
     _df_lockerdb = df_lockerdb.reset_index(names='rel_path')
 
