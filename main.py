@@ -170,33 +170,28 @@ def fix_movie_folder():
 
 def refresh_db():
     fix_movie_folder()
-    # fix_actor_db()
-
-    # change actor names to title case
-    # for movie in moviedb.arrMovies:
-    #     if movie["actor"] != movie["actor"].title():
-    #         rel_path_new = movie["rel_path"].replace(movie["actor"],
-    #                                                  movie["actor"].title(), 1)
-    #         if os.path.exists(os.path.join(CONFIG["MOVIEDIR"], rel_path_new)):
-    #             moviedb.update(movie["rel_path"], "rel_path", rel_path_new)
-    #             moviedb.update(movie["rel_path"], "actor",
-    #                            movie["actor"].title())
 
     # check for non-existent entries in database
+    arrDelete = []
+    for rel_path in df_lockerdb.index.to_list():
+        full_path = os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path)
+        if not os.path.exists(full_path):
+            arrDelete.append(rel_path)
+
     # arrDelete = []
     # for movie in moviedb.arrMovies:
     #     full_path = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
     #     if not os.path.exists(full_path):
     #         arrDelete.append(movie["rel_path"])
-    # if len(arrDelete) > 0:
-    #     print("The following files will be removed from database.")
-    #     print("Please verify whether they actually exist in the filesystem")
-    #     for rel_path in arrDelete:
-    #         print(rel_path)
-    #     delete = input("Are you sure to delete them?\n 1. Yes\t 2. No ")
-    #     if delete == "1":
-    #         for rel_path in arrDelete:
-    #             delete_movie(rel_path)
+    if len(arrDelete) > 0:
+        for rel_path in arrDelete:
+            print(rel_path)
+        delete = input(
+            "The above files are not found in filesystem. Remove them from database?\n 1. Yes\t 2. No ")
+        if delete == "1":
+            for rel_path in arrDelete:
+                df_lockerdb.drop(rel_path, inplace=True)
+            print("Done removing files")
 
     # add any new files
     # for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
