@@ -7,6 +7,7 @@ import pandas as pd
 import os.path
 import configparser
 import random
+from datetime import datetime
 import time
 from send2trash import send2trash
 
@@ -168,6 +169,39 @@ def fix_movie_folder():
         print("\nNo errors found in movie folder")
 
 
+def add_movie(rel_path):
+    global df_lockerdb
+    print("Adding to database:", rel_path)
+
+    # finding the actor name. Its basically the second folder from rel_path
+    folder1 = None
+    folder2 = None
+    head = rel_path
+
+    while True:
+        head, tail = os.path.split(head)
+        folder2 = folder1
+        folder1 = tail
+        if len(head) == 0:
+            break
+    actor = folder2
+
+    # create the entry
+    df = pd.DataFrame({
+        "rel_path": [rel_path],
+        "movie_rating": [None],
+        "actor_rating": [None],
+        "playcount": [0],
+        "actor": [actor],
+        "category": ["Straight"],
+        "timestamp": [datetime.now().strftime("%Y-%m-%d_%H:%M:%S")]
+    })
+    df.set_index('rel_path', inplace=True)
+    df_lockerdb = pd.concat([df_lockerdb, df])
+    write_database()
+    exit()
+
+
 def refresh_db():
     fix_movie_folder()
 
@@ -177,12 +211,6 @@ def refresh_db():
         full_path = os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path)
         if not os.path.exists(full_path):
             arrDelete.append(rel_path)
-
-    # arrDelete = []
-    # for movie in moviedb.arrMovies:
-    #     full_path = os.path.join(CONFIG["MOVIEDIR"], movie["rel_path"])
-    #     if not os.path.exists(full_path):
-    #         arrDelete.append(movie["rel_path"])
     if len(arrDelete) > 0:
         for rel_path in arrDelete:
             print(rel_path)
@@ -194,15 +222,16 @@ def refresh_db():
             print("Done removing files")
 
     # add any new files
-    # for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
-    #     for file in files:
-    #         # add to database if not exist already
-    #         # assuming non-movie files are already deleted
-    #         path = os.path.join(root, file)
-    #         rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
-    #         if not moviedb.exists(rel_path):
-    #             moviedb.add(rel_path)
+    for root, subdirs, files in os.walk(config['DEFAULT']["MOVIEDIR"]):
+        for file in files:
+            # add to database if not exist already
+            # assuming non-movie files are already deleted
+            path = os.path.join(root, file)
+            rel_path = path[len(config['DEFAULT']["MOVIEDIR"])::][1:]
+            if rel_path not in df_lockerdb.index.to_list():
+                add_movie(rel_path)
 
+    # write_database()
     print("\nDatabase refresh completed.")
 
 
@@ -343,7 +372,8 @@ def show_stats_actor(actorname):
     # print all values
     print("")
     print("Selected actor:", actorname)
-    print("Actor rating:", df_lockerdb[select].iloc[0, col])
+    actor_rating = df_lockerdb[select].iloc[0, col]
+    print("Actor rating:", actor_rating)
     print("Total movies of this actor:", cnt_movies)
     print("Movies played for this actor:",
           df_lockerdb[select]['playcount'].sum())
