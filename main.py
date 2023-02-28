@@ -7,6 +7,7 @@ import pandas as pd
 import os.path
 import configparser
 import random
+import time
 from send2trash import send2trash
 
 # import custom packages
@@ -71,7 +72,7 @@ def fix_movie_folder():
     arrDelete = []
     arrCase = []
     arrEmptyFolders = []
-    for root, subdirs, files in os.walk(CONFIG["MOVIEDIR"]):
+    for root, subdirs, files in os.walk(config['DEFAULT']['MOVIEDIR']):
         if len(subdirs) + len(files) == 0:
             arrEmptyFolders.append(root)
 
@@ -79,7 +80,7 @@ def fix_movie_folder():
             path = os.path.join(root, file)
             try:
                 # extract the relative path
-                rel_path = path[len(CONFIG["MOVIEDIR"])::][1:]
+                rel_path = path[len(config['DEFAULT']['MOVIEDIR'])::][1:]
 
                 # mark non movie files for delete
                 ext = os.path.splitext(path)[1]
@@ -94,7 +95,7 @@ def fix_movie_folder():
                     head, tail = os.path.split(head)
                     folder2 = folder1
                     folder1 = tail
-                    if head == CONFIG["MOVIEDIR"]:
+                    if head == config['DEFAULT']['MOVIEDIR']:
                         break
                 actor = folder2
                 if actor != actor.title():
@@ -132,8 +133,14 @@ def fix_movie_folder():
 
     # delete the non movie files
     elif len(arrDelete) > 0:
-        for rel_path in arrDelete:
-            delete_movie(rel_path)
+        for file in arrDelete:
+            print(file)
+        confirm = input(
+            "\nThe above file are not movies and will be removed. Please confirm (y/n): ")
+        if confirm == "y":
+            for rel_path in arrDelete:
+                send2trash(os.path.join(
+                    config['DEFAULT']["MOVIEDIR"], rel_path))
 
     # change actor names to title case
     elif len(arrCase) > 0:
@@ -150,6 +157,7 @@ def fix_movie_folder():
                 dest = os.path.join(head, tail.title())
 
                 os.rename(src, dest + "_")
+                print("Renaming file: ", src)
                 time.sleep(1)
             for partpath in arrCase:
                 head, tail = os.path.split(partpath)
@@ -157,11 +165,11 @@ def fix_movie_folder():
                 os.rename(src, src[:-1])
 
     else:
-        print("\nNo errors found")
+        print("\nNo errors found in movie folder")
 
 
 def refresh_db():
-    # fix_movie_folder()
+    fix_movie_folder()
     # fix_actor_db()
 
     # change actor names to title case
@@ -349,7 +357,10 @@ def show_stats_actor(actorname):
 def delete_movie(rel_path):
     print("deleting file: ", rel_path)
     send2trash(os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path))
-    df_lockerdb.drop(rel_path, inplace=True)
+    try:
+        df_lockerdb.drop(rel_path, inplace=True)
+    except:
+        print("ERROR: Cant delete file from database")
 
 
 def show_menu_postplay(rel_path, back=False):
