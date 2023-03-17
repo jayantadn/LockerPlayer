@@ -292,7 +292,7 @@ def show_menu_actor():
 
 def show_menu_main():
     menu = Menu()
-    menu.add(MenuItem("Play random actor", play_random_actor))
+    # menu.add(MenuItem("Play random actor", play_random_actor))
     menu.add(MenuItem("Play by movie", show_menu_movie))
     menu.add(MenuItem("Play by actor", show_menu_actor))
     # menu.add( MenuItem( "Other options", show_menu_other ) )
