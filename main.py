@@ -190,7 +190,7 @@ def add_movie(rel_path):
     df = pd.DataFrame({
         "rel_path": [rel_path],
         "movie_rating": [''],
-        "actor_rating": [''],
+        "actor_rating": [get_actor_rating(actor)],
         "playcount": ['0'],
         "actor": [actor],
         "category": ["Straight"],
@@ -375,6 +375,20 @@ def show_stats_actor(actorname):
     print("Total movies of this actor:", cnt_movies)
     print("Movies played for this actor:",
           df_lockerdb[select]['playcount'].sum())
+
+
+def get_actor_rating(actorname):
+    select = df_lockerdb["actor"] == actorname
+    col = df_lockerdb.columns.get_loc(
+        'actor_rating')  # get column index from name
+    nrows, _ = df_lockerdb[select].shape
+    if nrows == 0:
+        actor_rating = 0
+    else:
+        actor_rating = df_lockerdb[select].iloc[0, col]
+        if actor_rating == "":
+            actor_rating = 0
+    return actor_rating
 
 
 def delete_movie(rel_path):
