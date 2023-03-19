@@ -191,7 +191,7 @@ def add_movie(rel_path):
         "rel_path": [rel_path],
         "movie_rating": [''],
         "actor_rating": [get_actor_rating(actor)],
-        "playcount": ['0'],
+        "playcount": [0],
         "actor": [actor],
         "category": ["Straight"],
         # "timestamp": [datetime.now().strftime("%Y-%m-%d_%H:%M:%S")]
@@ -554,7 +554,7 @@ def show_menu_main():
     # menu.add(MenuItem("Play random actor", play_random_actor))
     menu.add(MenuItem("Play by movie", show_menu_movie))
     menu.add(MenuItem("Play by actor", show_menu_actor))
-    # menu.add( MenuItem( "Other options", show_menu_other ) )
+    menu.add(MenuItem("Other options", show_menu_other))
     while True:
         menu.show()
 
