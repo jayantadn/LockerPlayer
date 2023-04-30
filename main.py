@@ -242,7 +242,7 @@ def play_file(rel_path):
 
     # increment the playcount
     df_lockerdb.at[rel_path,
-                   'playcount'] = df_lockerdb.at[rel_path, 'playcount'] + 1
+                   'playcount'] = int(df_lockerdb.at[rel_path, 'playcount']) + 1
 
     # open player
     player = config["DEFAULT"]["PLAYER"]
