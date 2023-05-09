@@ -27,7 +27,7 @@ def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
 
-    if not os.path.exists(os.path.join(CURDIR, 'credentials.json')) or not os.path.exists(os.path.join(CURDIR, 'token.json')):
+    if not (os.path.exists(os.path.join(CURDIR, 'credentials.json')) or os.path.exists(os.path.join(CURDIR, 'token.json'))):
         print("ERROR: 'credentials.json' or 'token.json' does not exist")
         print("Please download the google credentials to the current path")
         exit(1)
