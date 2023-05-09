@@ -447,7 +447,7 @@ def show_menu_postplay(rel_path, back=False):
             arrDelete = df_lockerdb[select].index.to_list()
             for idx in arrDelete:
                 delete_movie(idx)
-            menu.add(MenuItem("Delete actor", idelete_actor))
+    menu.add(MenuItem("Delete actor", idelete_actor))
 
     # def iupdate_stats():
     #     entry = 1
