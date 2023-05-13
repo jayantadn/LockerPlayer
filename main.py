@@ -311,6 +311,11 @@ def play_actor(actor=None):
             print("ERROR: Invalid choice")
             break
 
+def play_something():
+    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie]
+    idx = random.randint(0, len(arr)-1)
+    arr[idx]()
+
 def play_rated_movie() :
     print("\nPlay a high rated movie")
 
@@ -346,6 +351,8 @@ def play_rated_movie() :
             break
 
 def play_random_movie():
+    print("\nPlay a random movie")
+
     while True:
         nrows, _ = df_lockerdb.shape
         # get a random file
@@ -371,6 +378,8 @@ def play_random_movie():
 
 
 def play_random_actor():
+    print("\nPlay a random movie")
+
     list_actors = df_lockerdb['actor'].drop_duplicates().to_list()
 
     while True:
@@ -435,7 +444,6 @@ def show_stats_actor(actorname):
     cnt_movies, _ = df_lockerdb[select].shape
 
     # print all values
-    print("")
     print("Selected actor:", actorname)
     actor_rating = df_lockerdb[select].iloc[0, col]
     print("Actor rating:", actor_rating)
@@ -445,7 +453,6 @@ def show_stats_actor(actorname):
 
 def show_stats_movie(rel_path):
     # print all values
-    print("")
     print("Selected movie:", rel_path)
     print("Movie rating:", df_lockerdb.at[rel_path, 'movie_rating'])
     print("Actor:", df_lockerdb.at[rel_path, 'actor'])
@@ -626,7 +633,7 @@ def show_stats_overall():
 
 def show_menu_main():
     menu = Menu()
-    # menu.add(MenuItem("Play random actor", play_random_actor))
+    menu.add(MenuItem("Play something", play_something))
     menu.add(MenuItem("Play by movie", show_menu_movie))
     menu.add(MenuItem("Play by actor", show_menu_actor))
     menu.add(MenuItem("Other options", show_menu_other))
