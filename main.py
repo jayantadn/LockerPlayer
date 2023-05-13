@@ -27,7 +27,7 @@ def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
 
-    if not os.path.exists(os.path.join(CURDIR, 'credentials.json')) or not os.path.exists(os.path.join(CURDIR, 'token.json')):
+    if not (os.path.exists(os.path.join(CURDIR, 'credentials.json')) or os.path.exists(os.path.join(CURDIR, 'token.json'))):
         print("ERROR: 'credentials.json' or 'token.json' does not exist")
         print("Please download the google credentials to the current path")
         exit(1)
@@ -447,7 +447,7 @@ def show_menu_postplay(rel_path, back=False):
             arrDelete = df_lockerdb[select].index.to_list()
             for idx in arrDelete:
                 delete_movie(idx)
-            menu.add(MenuItem("Delete actor", idelete_actor))
+    menu.add(MenuItem("Delete actor", idelete_actor))
 
     # def iupdate_stats():
     #     entry = 1
