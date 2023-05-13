@@ -233,7 +233,7 @@ def refresh_db():
     print("\nDatabase refresh completed.")
 
 
-def play_file(rel_path):
+def play_movie(rel_path):
     # filename validation
     full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
     if not os.path.exists(full_path):
@@ -300,7 +300,7 @@ def play_actor(actor=None):
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
             rel_path = df_lockerdb[select].iloc[idx].name
-            play_file(rel_path)
+            play_movie(rel_path)
             break
         elif choice == "2":  # Retry
             continue
@@ -311,6 +311,39 @@ def play_actor(actor=None):
             print("ERROR: Invalid choice")
             break
 
+def play_rated_movie() :
+    print("\nPlay a high rated movie")
+
+    # fetch minimum rating from user
+    rating = int( input("Enter the minimum rating: ") )
+
+    # create a list of movies with at least given rating
+    select = pd.to_numeric(df_lockerdb['movie_rating']) >= rating
+    arrMovies = df_lockerdb[select].index.to_list()
+
+    # randomize and play movie from the list
+    while True:
+        idx = random.randint(0, len(arrMovies)-1)
+        movie = arrMovies[idx]
+        if movie is not None and not movie == "Unknown":
+            show_stats_movie(movie)
+
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        
+        if choice == "1":
+            play_movie(movie)
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0":
+            show_menu_main()
+            break
+
+        else:
+            print("ERROR: Invalid choice")
+            break
 
 def play_random_movie():
     while True:
@@ -319,13 +352,13 @@ def play_random_movie():
         idx = random.randrange(0, nrows, 1)
 
         # print stats for the file
-        myprint(df_lockerdb.iloc[idx])
+        show_stats_movie(df_lockerdb.iloc[idx].name)
 
         # play the movie on user request
         choice = input(
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
-            play_file(df_lockerdb.iloc[idx].name)
+            play_movie(df_lockerdb.iloc[idx].name)
             break
         elif choice == "2":  # Retry
             continue
@@ -410,6 +443,14 @@ def show_stats_actor(actorname):
     print("Movies played for this actor:",
           df_lockerdb[select]['playcount'].sum())
 
+def show_stats_movie(rel_path):
+    # print all values
+    print("")
+    print("Selected movie:", rel_path)
+    print("Movie rating:", df_lockerdb.at[rel_path, 'movie_rating'])
+    print("Actor:", df_lockerdb.at[rel_path, 'actor'])
+    print("Category:", df_lockerdb.at[rel_path, 'category'])
+    print("Studio:", df_lockerdb.at[rel_path, 'studio'])
 
 def get_actor_rating(actorname):
     select = df_lockerdb["actor"] == actorname
@@ -509,7 +550,7 @@ def show_menu_postplay(rel_path, back=False):
 def show_menu_movie():
     menu = Menu()
     menu.add(MenuItem("Play a random movie", play_random_movie))
-    # menu.add( MenuItem( "Play a hi rated movie", play_rated ) )
+    menu.add( MenuItem( "Play a hi rated movie", play_rated_movie ) )
     # menu.add( MenuItem( "Play an unrated movie", play_unrated ) )
     while True:
         menu.show()
