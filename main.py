@@ -509,7 +509,7 @@ def show_stats_actor(actorname):
 
 def show_stats_movie(rel_path):
     # print all values
-    print("Selected movie:", rel_path)
+    print("Selected movie:", os.path.basename(rel_path))
     print("Movie rating:", df_lockerdb.at[rel_path, 'movie_rating'])
     print("Actor:", df_lockerdb.at[rel_path, 'actor'])
     print("Category:", df_lockerdb.at[rel_path, 'category'])
