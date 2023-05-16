@@ -194,6 +194,7 @@ def add_movie(rel_path):
         "playcount": [0],
         "actor": [actor],
         "category": ["Straight"],
+        "studio": [rel_path.split("\\")[0]],
         # "timestamp": [datetime.now().strftime("%Y-%m-%d_%H:%M:%S")]
     })
     df.set_index('rel_path', inplace=True)
@@ -639,6 +640,7 @@ def show_menu_other():
     menu.add(MenuItem("Show overall statistics", show_stats_overall))
     # menu.add( MenuItem( "Copy high rated movies", copy_hi_movies ) )
     # menu.add( MenuItem( "Show play history", show_play_history ) )
+    menu.add( MenuItem( "Update studio information", update_studio ) )
     while True:
         menu.show()
 
@@ -694,6 +696,15 @@ def show_menu_main():
     menu.add(MenuItem("Other options", show_menu_other))
     while True:
         menu.show()
+
+
+def update_studio():
+    global df_lockerdb
+    
+    print("Updating studio information")
+    s_studio = df_lockerdb.index.map(lambda x: x.split("\\")[0])
+    df_lockerdb['studio'] = s_studio
+    write_database()
 
 
 def write_database():
