@@ -313,7 +313,7 @@ def play_actor(actor=None):
             break
 
 def play_something():
-    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie, play_unrated_actor, play_unrated_movie]
+    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie, play_unrated_actor, play_unrated_movie, play_random_studio]
     idx = random.randint(0, len(arr)-1)
     arr[idx]()
 
@@ -602,11 +602,13 @@ def show_menu_postplay(rel_path, back=False):
         list_fields = df_lockerdb.columns.tolist()
         for i, field in enumerate(list_fields):
             print(i, field)
-        col = int(input("Select stat to update: "))
-        value = input("Enter value: ")
+        col = int(input("\nSelect stat to update: "))
+        
         if list_fields[col] == 'movie_rating':
+            value = input("Enter value: ")
             df_lockerdb.at[rel_path, 'movie_rating'] = int(value)
         elif list_fields[col] == 'actor_rating':
+            value = input("Enter value: ")
             actor = df_lockerdb.at[rel_path, 'actor']
             select = df_lockerdb['actor'] == actor
             list_select = df_lockerdb[select].index.to_list()
@@ -614,6 +616,18 @@ def show_menu_postplay(rel_path, back=False):
             for _ in range(len(list_select)):
                 arr.append(int(value))
             df_lockerdb.loc[list_select, 'actor_rating'] = arr
+        if list_fields[col] == 'studio':
+            arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
+            for i, studio in enumerate(arrstudio):
+                print(i+1, studio)
+            print(0, "Something else")
+            i = int(input("Please select an studio: ")) - 1
+            assert -1 <= i < len(arrstudio), "Invalid input"
+            if i == -1:
+                studio = input("Enter studio name: ")
+            else:
+                studio = arrstudio[i]            
+            df_lockerdb.at[rel_path, 'studio'] = studio
         else:
             myprint(f"Cant edit field: {list_fields[col]}")
     menu.add(MenuItem("Update stats", iupdate_stats))
