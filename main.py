@@ -492,6 +492,60 @@ def play_unrated_actor():
             print("ERROR: Invalid choice")
             break
 
+# Play movies for a given studio. If no studio specified, prompt for one.
+def play_studio(studio=None):
+    # generate list of studios
+    arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
+
+    # if no studio is specified, prompt for the studio name.
+    if studio is None:
+        assert len(arrstudio) != 0, "No such studio found"
+        for i, studio in enumerate(arrstudio):
+            print(i, studio)
+        print(i+1, "Go back")
+        i = int(input("Please select an studio: "))
+        assert 0 <= i <= len(arrstudio), "Invalid input"
+        if i == len(arrstudio):
+            return  # Go back
+        studio = arrstudio[i]
+
+    # select a random movie for the studio
+    select = df_lockerdb['studio'] == studio
+    while True:
+        nrows, _ = df_lockerdb[select].shape
+        # get a random file
+        idx = random.randrange(0, nrows, 1)
+
+        # print stats for the file
+        myprint(df_lockerdb[select].iloc[idx])
+
+        # play the movie on user request
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":  # Play
+            rel_path = df_lockerdb[select].iloc[idx].name
+            play_movie(rel_path)
+            break
+        elif choice == "2":  # Retry
+            continue
+        elif choice == "0":
+            show_menu_main()
+            break
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+def play_random_studio():
+    print("\nPlay a random studio")
+
+    list_studios = df_lockerdb['studio'].drop_duplicates().to_list()
+
+    while True:
+        idx = random.randrange(0, len(list_studios), 1)
+        studio = list_studios[idx]
+        print(f"Selected studio is: {studio}")
+        play_studio(studio)
+
 def show_stats_actor(actorname):
     # calculate number of movies
     select = df_lockerdb["actor"] == actorname
@@ -632,6 +686,15 @@ def show_menu_actor():
         menu.show()
 
 
+def show_menu_studio():
+    """show menu to select a studio"""
+
+    menu = Menu()
+    menu.add(MenuItem("Play random studio", play_random_studio))
+    menu.add(MenuItem("Play selected studio", play_studio))
+    while True:
+        menu.show()
+
 def show_menu_other():
     """show menu which could not fit into main menu"""
 
@@ -693,6 +756,7 @@ def show_menu_main():
     menu.add(MenuItem("Play something", play_something))
     menu.add(MenuItem("Play by movie", show_menu_movie))
     menu.add(MenuItem("Play by actor", show_menu_actor))
+    menu.add(MenuItem("Play by studio", show_menu_studio))
     menu.add(MenuItem("Other options", show_menu_other))
     while True:
         menu.show()
