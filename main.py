@@ -501,11 +501,11 @@ def play_studio(studio=None):
     if studio is None:
         assert len(arrstudio) != 0, "No such studio found"
         for i, studio in enumerate(arrstudio):
-            print(i, studio)
-        print(i+1, "Go back")
-        i = int(input("Please select an studio: "))
-        assert 0 <= i <= len(arrstudio), "Invalid input"
-        if i == len(arrstudio):
+            print(i+1, studio)
+        print(0, "Go back")
+        i = int(input("Please select an studio: ")) - 1
+        assert -1 <= i < len(arrstudio), "Invalid input"
+        if i == -1:
             return  # Go back
         studio = arrstudio[i]
 
@@ -689,7 +689,7 @@ def show_menu_actor():
 def show_menu_studio():
     """show menu to select a studio"""
 
-    menu = Menu()
+    menu = Menu(show_menu_main)
     menu.add(MenuItem("Play random studio", play_random_studio))
     menu.add(MenuItem("Play selected studio", play_studio))
     while True:
