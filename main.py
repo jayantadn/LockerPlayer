@@ -189,7 +189,7 @@ def add_movie(rel_path):
     # create the entry
     df = pd.DataFrame({
         "rel_path": [rel_path],
-        "movie_rating": [''],
+        "movie_rating": [0],
         "actor_rating": [get_actor_rating(actor)],
         "playcount": [0],
         "actor": [actor],
@@ -312,18 +312,15 @@ def play_actor(actor=None):
             break
 
 def play_something():
-    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie]
+    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie, play_unrated_actor, play_unrated_movie]
     idx = random.randint(0, len(arr)-1)
     arr[idx]()
 
 def play_rated_movie() :
     print("\nPlay a high rated movie")
 
-    # fetch minimum rating from user
-    rating = int( input("Enter the minimum rating: ") )
-
     # create a list of movies with at least given rating
-    select = pd.to_numeric(df_lockerdb['movie_rating']) >= rating
+    select = pd.to_numeric(df_lockerdb['movie_rating']) >= MINRATING
     arrMovies = df_lockerdb[select].index.to_list()
 
     # randomize and play movie from the list
@@ -349,6 +346,38 @@ def play_rated_movie() :
         else:
             print("ERROR: Invalid choice")
             break
+
+def play_unrated_movie() :
+    print("\nPlay a unrated movie")
+
+    # create a list of movies with no rating
+    select = pd.to_numeric(df_lockerdb['movie_rating']) == 0
+    arrMovies = df_lockerdb[select].index.to_list()
+
+    # randomize and play movie from the list
+    while True:
+        idx = random.randint(0, len(arrMovies)-1)
+        movie = arrMovies[idx]
+        if movie is not None and not movie == "Unknown":
+            show_stats_movie(movie)
+
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        
+        if choice == "1":
+            play_movie(movie)
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0":
+            show_menu_main()
+            break
+
+        else:
+            print("ERROR: Invalid choice")
+            break
+
 
 def play_random_movie():
     print("\nPlay a random movie")
@@ -378,7 +407,7 @@ def play_random_movie():
 
 
 def play_random_actor():
-    print("\nPlay a random movie")
+    print("\nPlay a random actor")
 
     list_actors = df_lockerdb['actor'].drop_duplicates().to_list()
 
@@ -405,11 +434,8 @@ def play_random_actor():
 def play_rated_actor():
     print("\nPlay movie for a high rated actor")
 
-    # fetch minimum rating from user
-    rating = int(input("Please enter minimum rating for actor: "))
-
     # create a list of actors with at least given rating
-    select = pd.to_numeric(df_lockerdb['actor_rating']) >= rating
+    select = pd.to_numeric(df_lockerdb['actor_rating']) >= MINRATING
     actorlist = df_lockerdb[select]['actor'].unique()
 
     # randomize and play actor from the list
@@ -435,6 +461,35 @@ def play_rated_actor():
             print("ERROR: Invalid choice")
             break
 
+def play_unrated_actor():
+    print("\nPlay movie for a unrated actor")
+
+    # create a list of actors with at least given rating
+    select = pd.to_numeric(df_lockerdb['actor_rating']) == 0
+    actorlist = df_lockerdb[select]['actor'].unique()
+
+    # randomize and play actor from the list
+    while True:
+        idx = random.randint(0, len(actorlist)-1)
+        actor = actorlist[idx]
+        if actor is not None and not actor == "Unknown":
+            show_stats_actor(actor)
+
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":
+            play_actor(actor)
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0":
+            show_menu_main()
+            break
+
+        else:
+            print("ERROR: Invalid choice")
+            break
 
 def show_stats_actor(actorname):
     # calculate number of movies
@@ -558,7 +613,7 @@ def show_menu_movie():
     menu = Menu()
     menu.add(MenuItem("Play a random movie", play_random_movie))
     menu.add( MenuItem( "Play a hi rated movie", play_rated_movie ) )
-    # menu.add( MenuItem( "Play an unrated movie", play_unrated ) )
+    menu.add( MenuItem( "Play an unrated movie", play_unrated_movie ) )
     while True:
         menu.show()
 
@@ -570,7 +625,7 @@ def show_menu_actor():
     menu.add(MenuItem("Play random actor", play_random_actor))
     menu.add(MenuItem("Play selected actor", play_actor))
     menu.add(MenuItem("Play a high rated actor", play_rated_actor))
-    # menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
+    menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
     # menu.add( MenuItem( "Play an actor never played before", play_unplayed_actor ) )
     while True:
         menu.show()
