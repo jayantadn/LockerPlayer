@@ -313,7 +313,8 @@ def play_actor(actor=None):
             break
 
 def play_something():
-    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie, play_unrated_actor, play_unrated_movie, play_random_studio]
+    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie, 
+            play_unrated_actor, play_unrated_movie, play_random_studio, play_category] 
     idx = random.randint(0, len(arr)-1)
     arr[idx]()
 
@@ -535,6 +536,47 @@ def play_studio(studio=None):
             print("ERROR: Invalid choice")
             break
 
+# Play movies for a given studio. If no studio specified, prompt for one.
+def play_category(category=None):
+    # generate list of category
+    arrcategory = df_lockerdb['category'].drop_duplicates().to_list()
+
+    # if no category is specified, select a random category
+    if category is None:
+        assert len(arrcategory) != 0, "No such category found"
+        idx = random.randint(0, len(arrcategory)-1)
+        assert 0 <= idx < len(arrcategory), "Invalid input"
+        category = arrcategory[idx]
+
+    print(f"\nSelected category is {category}")
+
+    # select a random movie for the category
+    select = df_lockerdb['category'] == category
+    while True:
+        nrows, _ = df_lockerdb[select].shape
+        # get a random file
+        idx = random.randrange(0, nrows, 1)
+
+        # print stats for the file
+        myprint(df_lockerdb[select].iloc[idx])
+
+        # play the movie on user request
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":  # Play
+            rel_path = df_lockerdb[select].iloc[idx].name
+            play_movie(rel_path)
+            break
+        elif choice == "2":  # Retry
+            continue
+        elif choice == "0":
+            show_menu_main()
+            break
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+
 def play_random_studio():
     print("\nPlay a random studio")
 
@@ -706,6 +748,7 @@ def show_menu_studio():
     menu = Menu(show_menu_main)
     menu.add(MenuItem("Play random studio", play_random_studio))
     menu.add(MenuItem("Play selected studio", play_studio))
+    menu.add(MenuItem("Play random category", play_category))
     while True:
         menu.show()
 
