@@ -314,7 +314,7 @@ def play_actor(actor=None):
 
 def play_something():
     arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie, 
-            play_unrated_actor, play_unrated_movie, play_random_studio, play_category] 
+            play_unrated_actor, play_unrated_movie, play_random_studio] 
     idx = random.randint(0, len(arr)-1)
     arr[idx]()
 
