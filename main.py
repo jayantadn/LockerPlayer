@@ -670,15 +670,21 @@ def show_menu_postplay(rel_path, back=False):
             else:
                 studio = arrstudio[i]            
             df_lockerdb.at[rel_path, 'studio'] = studio
+        if list_fields[col] == 'category':
+            arrcategory = df_lockerdb['category'].drop_duplicates().to_list()
+            for i, category in enumerate(arrcategory):
+                print(i+1, category)
+            print(0, "Something else")
+            i = int(input("Please select an category: ")) - 1
+            assert -1 <= i < len(arrcategory), "Invalid input"
+            if i == -1:
+                category = input("Enter category name: ")
+            else:
+                category = arrcategory[i]            
+            df_lockerdb.at[rel_path, 'category'] = category
         else:
             myprint(f"Cant edit field: {list_fields[col]}")
     menu.add(MenuItem("Update stats", iupdate_stats))
-
-    # def irate_actor():
-    #     actor = moviedb.arrMovies[idxMovie]["actor"]
-    #     rating = input("Please enter rating for actor " + actor + " : ")
-    #     actordb.rate(actor, rating)
-    # menu.add(MenuItem("Rate actor", irate_actor))
 
     def idelete_movie():
         delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
@@ -696,24 +702,6 @@ def show_menu_postplay(rel_path, back=False):
             for idx in arrDelete:
                 delete_movie(idx)
     menu.add(MenuItem("Delete actor", idelete_actor))
-
-    # def iupdate_stats():
-    #     entry = 1
-    #     for key, val in moviedb.arrMovies[idxMovie].items():
-    #         if key != "rel_path" and key != "timestamp":
-    #             print(entry, key.ljust(10), val)
-    #             entry += 1
-    #     print(0, "Go back..")
-    #     choice = int(input("Which field do you want to update: "))
-    #     entry = 1
-    #     for key, val in moviedb.arrMovies[idxMovie].items():
-    #         if key != "rel_path" and key != "timestamp":
-    #             if entry == choice:
-    #                 val = input("Please enter new value for " + key + " : ")
-    #                 moviedb.update(rel_path, key, val)
-    #                 break
-    #             entry += 1
-    # menu.add(MenuItem("Update stats", iupdate_stats))
 
     while True:
         menu.show()
