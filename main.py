@@ -642,6 +642,7 @@ def show_menu_postplay(rel_path, back=False):
 
     def iupdate_stats():
         list_fields = df_lockerdb.columns.tolist()
+        print("")
         for i, field in enumerate(list_fields):
             print(i, field)
         col = int(input("\nSelect stat to update: "))
@@ -658,7 +659,7 @@ def show_menu_postplay(rel_path, back=False):
             for _ in range(len(list_select)):
                 arr.append(int(value))
             df_lockerdb.loc[list_select, 'actor_rating'] = arr
-        if list_fields[col] == 'studio':
+        elif list_fields[col] == 'studio':
             arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
             for i, studio in enumerate(arrstudio):
                 print(i+1, studio)
@@ -670,7 +671,7 @@ def show_menu_postplay(rel_path, back=False):
             else:
                 studio = arrstudio[i]            
             df_lockerdb.at[rel_path, 'studio'] = studio
-        if list_fields[col] == 'category':
+        elif list_fields[col] == 'category':
             arrcategory = df_lockerdb['category'].drop_duplicates().to_list()
             for i, category in enumerate(arrcategory):
                 print(i+1, category)
