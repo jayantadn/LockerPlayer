@@ -52,6 +52,7 @@ def gsheet_init():
     df_lockerdb.playcount = pd.to_numeric(df_lockerdb.playcount)
     df_lockerdb.movie_rating = pd.to_numeric(df_lockerdb.movie_rating)
     df_lockerdb.actor_rating = pd.to_numeric(df_lockerdb.actor_rating)
+    df_lockerdb.studio = df_lockerdb.studio.astype(str)
 
 
 def fix_movie_folder():
@@ -496,6 +497,7 @@ def play_unrated_actor():
 def play_studio(studio=None):
     # generate list of studios
     arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
+    arrstudio.sort()
 
     # if no studio is specified, prompt for the studio name.
     if studio is None:
@@ -659,10 +661,11 @@ def show_menu_postplay(rel_path, back=False):
             df_lockerdb.loc[list_select, 'actor_rating'] = arr
         elif list_fields[col] == 'studio':
             arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
+            arrstudio.sort()
             for i, studio in enumerate(arrstudio):
                 print(i+1, studio)
             print(0, "Something else")
-            i = int(input("Please select an studio: ")) - 1
+            i = int(input("Please select a studio: ")) - 1
             assert -1 <= i < len(arrstudio), "Invalid input"
             if i == -1:
                 studio = input("Enter studio name: ")
