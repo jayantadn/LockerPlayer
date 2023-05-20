@@ -290,17 +290,16 @@ def play_actor(actor=None):
     select = df_lockerdb['actor'] == actor
     while True:
         nrows, _ = df_lockerdb[select].shape
+
         # get a random file
         idx = random.randrange(0, nrows, 1)
-
-        # print stats for the file
-        myprint(df_lockerdb[select].iloc[idx])
+        rel_path = df_lockerdb[select].iloc[idx].name
+        show_stats_movie(rel_path)
 
         # # play the movie on user request
         choice = input(
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
-            rel_path = df_lockerdb[select].iloc[idx].name
             play_movie(rel_path)
             break
         elif choice == "2":  # Retry
@@ -516,15 +515,13 @@ def play_studio(studio=None):
         nrows, _ = df_lockerdb[select].shape
         # get a random file
         idx = random.randrange(0, nrows, 1)
-
-        # print stats for the file
-        myprint(df_lockerdb[select].iloc[idx])
+        rel_path = df_lockerdb[select].iloc[idx].name
+        show_stats_movie(rel_path)
 
         # play the movie on user request
         choice = input(
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
-            rel_path = df_lockerdb[select].iloc[idx].name
             play_movie(rel_path)
             break
         elif choice == "2":  # Retry
@@ -608,6 +605,7 @@ def show_stats_movie(rel_path):
     print("Selected movie:", os.path.basename(rel_path))
     print("Movie rating:", df_lockerdb.at[rel_path, 'movie_rating'])
     print("Actor:", df_lockerdb.at[rel_path, 'actor'])
+    print("Actor Rating:", df_lockerdb.at[rel_path, 'actor_rating'])
     print("Category:", df_lockerdb.at[rel_path, 'category'])
     print("Studio:", df_lockerdb.at[rel_path, 'studio'])
 
