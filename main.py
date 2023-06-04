@@ -52,6 +52,7 @@ def gsheet_init():
     df_lockerdb.playcount = pd.to_numeric(df_lockerdb.playcount)
     df_lockerdb.movie_rating = pd.to_numeric(df_lockerdb.movie_rating)
     df_lockerdb.actor_rating = pd.to_numeric(df_lockerdb.actor_rating)
+    df_lockerdb.studio = df_lockerdb.studio.astype(str)
 
 
 def fix_movie_folder():
@@ -189,11 +190,12 @@ def add_movie(rel_path):
     # create the entry
     df = pd.DataFrame({
         "rel_path": [rel_path],
-        "movie_rating": [''],
+        "movie_rating": [0],
         "actor_rating": [get_actor_rating(actor)],
         "playcount": [0],
         "actor": [actor],
         "category": ["Straight"],
+        "studio": [rel_path.split("\\")[0]],
         # "timestamp": [datetime.now().strftime("%Y-%m-%d_%H:%M:%S")]
     })
     df.set_index('rel_path', inplace=True)
@@ -233,7 +235,7 @@ def refresh_db():
     print("\nDatabase refresh completed.")
 
 
-def play_file(rel_path):
+def play_movie(rel_path):
     # filename validation
     full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
     if not os.path.exists(full_path):
@@ -289,18 +291,17 @@ def play_actor(actor=None):
     select = df_lockerdb['actor'] == actor
     while True:
         nrows, _ = df_lockerdb[select].shape
+
         # get a random file
         idx = random.randrange(0, nrows, 1)
-
-        # print stats for the file
-        myprint(df_lockerdb[select].iloc[idx])
+        rel_path = df_lockerdb[select].iloc[idx].name
+        show_stats_movie(rel_path)
 
         # # play the movie on user request
         choice = input(
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
-            rel_path = df_lockerdb[select].iloc[idx].name
-            play_file(rel_path)
+            play_movie(rel_path)
             break
         elif choice == "2":  # Retry
             continue
@@ -311,21 +312,91 @@ def play_actor(actor=None):
             print("ERROR: Invalid choice")
             break
 
+def play_something():
+    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie, 
+            play_unrated_actor, play_unrated_movie, play_random_studio] 
+    idx = random.randint(0, len(arr)-1)
+    arr[idx]()
+
+def play_rated_movie() :
+    print("\nPlay a high rated movie")
+
+    # create a list of movies with at least given rating
+    select = pd.to_numeric(df_lockerdb['movie_rating']) >= MINRATING
+    arrMovies = df_lockerdb[select].index.to_list()
+
+    # randomize and play movie from the list
+    while True:
+        idx = random.randint(0, len(arrMovies)-1)
+        movie = arrMovies[idx]
+        if movie is not None and not movie == "Unknown":
+            show_stats_movie(movie)
+
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        
+        if choice == "1":
+            play_movie(movie)
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0":
+            show_menu_main()
+            break
+
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+def play_unrated_movie() :
+    print("\nPlay a unrated movie")
+
+    # create a list of movies with no rating
+    select = pd.to_numeric(df_lockerdb['movie_rating']) == 0
+    arrMovies = df_lockerdb[select].index.to_list()
+
+    # randomize and play movie from the list
+    while True:
+        idx = random.randint(0, len(arrMovies)-1)
+        movie = arrMovies[idx]
+        if movie is not None and not movie == "Unknown":
+            show_stats_movie(movie)
+
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        
+        if choice == "1":
+            play_movie(movie)
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0":
+            show_menu_main()
+            break
+
+        else:
+            print("ERROR: Invalid choice")
+            break
+
 
 def play_random_movie():
+    print("\nPlay a random movie")
+
     while True:
         nrows, _ = df_lockerdb.shape
         # get a random file
         idx = random.randrange(0, nrows, 1)
 
         # print stats for the file
-        myprint(df_lockerdb.iloc[idx])
+        show_stats_movie(df_lockerdb.iloc[idx].name)
 
         # play the movie on user request
         choice = input(
             "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
-            play_file(df_lockerdb.iloc[idx].name)
+            play_movie(df_lockerdb.iloc[idx].name)
             break
         elif choice == "2":  # Retry
             continue
@@ -338,6 +409,8 @@ def play_random_movie():
 
 
 def play_random_actor():
+    print("\nPlay a random actor")
+
     list_actors = df_lockerdb['actor'].drop_duplicates().to_list()
 
     while True:
@@ -360,6 +433,160 @@ def play_random_actor():
             break
 
 
+def play_rated_actor():
+    print("\nPlay movie for a high rated actor")
+
+    # create a list of actors with at least given rating
+    select = pd.to_numeric(df_lockerdb['actor_rating']) >= MINRATING
+    actorlist = df_lockerdb[select]['actor'].unique()
+
+    # randomize and play actor from the list
+    while True:
+        idx = random.randint(0, len(actorlist)-1)
+        actor = actorlist[idx]
+        if actor is not None and not actor == "Unknown":
+            show_stats_actor(actor)
+
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":
+            play_actor(actor)
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0":
+            show_menu_main()
+            break
+
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+def play_unrated_actor():
+    print("\nPlay movie for a unrated actor")
+
+    # create a list of actors with at least given rating
+    select = pd.to_numeric(df_lockerdb['actor_rating']) == 0
+    actorlist = df_lockerdb[select]['actor'].unique()
+
+    # randomize and play actor from the list
+    while True:
+        idx = random.randint(0, len(actorlist)-1)
+        actor = actorlist[idx]
+        if actor is not None and not actor == "Unknown":
+            show_stats_actor(actor)
+
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":
+            play_actor(actor)
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0":
+            show_menu_main()
+            break
+
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+# Play movies for a given studio. If no studio specified, prompt for one.
+def play_studio(studio=None):
+    # generate list of studios
+    arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
+    arrstudio.sort()
+
+    # if no studio is specified, prompt for the studio name.
+    if studio is None:
+        assert len(arrstudio) != 0, "No such studio found"
+        for i, studio in enumerate(arrstudio):
+            print(i+1, studio)
+        print(0, "Go back")
+        i = int(input("Please select an studio: ")) - 1
+        assert -1 <= i < len(arrstudio), "Invalid input"
+        if i == -1:
+            return  # Go back
+        studio = arrstudio[i]
+
+    # select a random movie for the studio
+    select = df_lockerdb['studio'] == studio
+    while True:
+        nrows, _ = df_lockerdb[select].shape
+        # get a random file
+        idx = random.randrange(0, nrows, 1)
+        rel_path = df_lockerdb[select].iloc[idx].name
+        show_stats_movie(rel_path)
+
+        # play the movie on user request
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":  # Play
+            play_movie(rel_path)
+            break
+        elif choice == "2":  # Retry
+            continue
+        elif choice == "0":
+            show_menu_main()
+            break
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+# Play movies for a given studio. If no studio specified, prompt for one.
+def play_category(category=None):
+    # generate list of category
+    arrcategory = df_lockerdb['category'].drop_duplicates().to_list()
+
+    # if no category is specified, select a random category
+    if category is None:
+        assert len(arrcategory) != 0, "No such category found"
+        idx = random.randint(0, len(arrcategory)-1)
+        assert 0 <= idx < len(arrcategory), "Invalid input"
+        category = arrcategory[idx]
+
+    print(f"\nSelected category is {category}")
+
+    # select a random movie for the category
+    select = df_lockerdb['category'] == category
+    while True:
+        nrows, _ = df_lockerdb[select].shape
+        # get a random file
+        idx = random.randrange(0, nrows, 1)
+
+        # print stats for the file
+        myprint(df_lockerdb[select].iloc[idx])
+
+        # play the movie on user request
+        choice = input(
+            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        if choice == "1":  # Play
+            rel_path = df_lockerdb[select].iloc[idx].name
+            play_movie(rel_path)
+            break
+        elif choice == "2":  # Retry
+            continue
+        elif choice == "0":
+            show_menu_main()
+            break
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+
+def play_random_studio():
+    print("\nPlay a random studio")
+
+    list_studios = df_lockerdb['studio'].drop_duplicates().to_list()
+
+    while True:
+        idx = random.randrange(0, len(list_studios), 1)
+        studio = list_studios[idx]
+        print(f"Selected studio is: {studio}")
+        play_studio(studio)
+
 def show_stats_actor(actorname):
     # calculate number of movies
     select = df_lockerdb["actor"] == actorname
@@ -368,7 +595,6 @@ def show_stats_actor(actorname):
     cnt_movies, _ = df_lockerdb[select].shape
 
     # print all values
-    print("")
     print("Selected actor:", actorname)
     actor_rating = df_lockerdb[select].iloc[0, col]
     print("Actor rating:", actor_rating)
@@ -376,6 +602,14 @@ def show_stats_actor(actorname):
     print("Movies played for this actor:",
           df_lockerdb[select]['playcount'].sum())
 
+def show_stats_movie(rel_path):
+    # print all values
+    print("Selected movie:", os.path.basename(rel_path))
+    print("Movie rating:", df_lockerdb.at[rel_path, 'movie_rating'])
+    print("Actor:", df_lockerdb.at[rel_path, 'actor'])
+    print("Actor Rating:", df_lockerdb.at[rel_path, 'actor_rating'])
+    print("Category:", df_lockerdb.at[rel_path, 'category'])
+    print("Studio:", df_lockerdb.at[rel_path, 'studio'])
 
 def get_actor_rating(actorname):
     select = df_lockerdb["actor"] == actorname
@@ -408,13 +642,16 @@ def show_menu_postplay(rel_path, back=False):
 
     def iupdate_stats():
         list_fields = df_lockerdb.columns.tolist()
+        print("")
         for i, field in enumerate(list_fields):
             print(i, field)
-        col = int(input("Select stat to update: "))
-        value = input("Enter value: ")
+        col = int(input("\nSelect stat to update: "))
+        
         if list_fields[col] == 'movie_rating':
+            value = input("Enter value: ")
             df_lockerdb.at[rel_path, 'movie_rating'] = int(value)
         elif list_fields[col] == 'actor_rating':
+            value = input("Enter value: ")
             actor = df_lockerdb.at[rel_path, 'actor']
             select = df_lockerdb['actor'] == actor
             list_select = df_lockerdb[select].index.to_list()
@@ -422,15 +659,34 @@ def show_menu_postplay(rel_path, back=False):
             for _ in range(len(list_select)):
                 arr.append(int(value))
             df_lockerdb.loc[list_select, 'actor_rating'] = arr
+        elif list_fields[col] == 'studio':
+            arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
+            arrstudio.sort()
+            for i, studio in enumerate(arrstudio):
+                print(i+1, studio)
+            print(0, "Something else")
+            i = int(input("Please select a studio: ")) - 1
+            assert -1 <= i < len(arrstudio), "Invalid input"
+            if i == -1:
+                studio = input("Enter studio name: ")
+            else:
+                studio = arrstudio[i]            
+            df_lockerdb.at[rel_path, 'studio'] = studio
+        elif list_fields[col] == 'category':
+            arrcategory = df_lockerdb['category'].drop_duplicates().to_list()
+            for i, category in enumerate(arrcategory):
+                print(i+1, category)
+            print(0, "Something else")
+            i = int(input("Please select an category: ")) - 1
+            assert -1 <= i < len(arrcategory), "Invalid input"
+            if i == -1:
+                category = input("Enter category name: ")
+            else:
+                category = arrcategory[i]            
+            df_lockerdb.at[rel_path, 'category'] = category
         else:
             myprint(f"Cant edit field: {list_fields[col]}")
     menu.add(MenuItem("Update stats", iupdate_stats))
-
-    # def irate_actor():
-    #     actor = moviedb.arrMovies[idxMovie]["actor"]
-    #     rating = input("Please enter rating for actor " + actor + " : ")
-    #     actordb.rate(actor, rating)
-    # menu.add(MenuItem("Rate actor", irate_actor))
 
     def idelete_movie():
         delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
@@ -449,24 +705,6 @@ def show_menu_postplay(rel_path, back=False):
                 delete_movie(idx)
     menu.add(MenuItem("Delete actor", idelete_actor))
 
-    # def iupdate_stats():
-    #     entry = 1
-    #     for key, val in moviedb.arrMovies[idxMovie].items():
-    #         if key != "rel_path" and key != "timestamp":
-    #             print(entry, key.ljust(10), val)
-    #             entry += 1
-    #     print(0, "Go back..")
-    #     choice = int(input("Which field do you want to update: "))
-    #     entry = 1
-    #     for key, val in moviedb.arrMovies[idxMovie].items():
-    #         if key != "rel_path" and key != "timestamp":
-    #             if entry == choice:
-    #                 val = input("Please enter new value for " + key + " : ")
-    #                 moviedb.update(rel_path, key, val)
-    #                 break
-    #             entry += 1
-    # menu.add(MenuItem("Update stats", iupdate_stats))
-
     while True:
         menu.show()
         write_database()
@@ -475,8 +713,8 @@ def show_menu_postplay(rel_path, back=False):
 def show_menu_movie():
     menu = Menu()
     menu.add(MenuItem("Play a random movie", play_random_movie))
-    # menu.add( MenuItem( "Play a hi rated movie", play_rated ) )
-    # menu.add( MenuItem( "Play an unrated movie", play_unrated ) )
+    menu.add( MenuItem( "Play a hi rated movie", play_rated_movie ) )
+    menu.add( MenuItem( "Play an unrated movie", play_unrated_movie ) )
     while True:
         menu.show()
 
@@ -487,12 +725,22 @@ def show_menu_actor():
     menu = Menu()
     menu.add(MenuItem("Play random actor", play_random_actor))
     menu.add(MenuItem("Play selected actor", play_actor))
-    # menu.add( MenuItem( "Play a high rated actor", play_rated_actor ) )
-    # menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
+    menu.add(MenuItem("Play a high rated actor", play_rated_actor))
+    menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
     # menu.add( MenuItem( "Play an actor never played before", play_unplayed_actor ) )
     while True:
         menu.show()
 
+
+def show_menu_studio():
+    """show menu to select a studio"""
+
+    menu = Menu(show_menu_main)
+    menu.add(MenuItem("Play random studio", play_random_studio))
+    menu.add(MenuItem("Play selected studio", play_studio))
+    menu.add(MenuItem("Play random category", play_category))
+    while True:
+        menu.show()
 
 def show_menu_other():
     """show menu which could not fit into main menu"""
@@ -502,6 +750,7 @@ def show_menu_other():
     menu.add(MenuItem("Show overall statistics", show_stats_overall))
     # menu.add( MenuItem( "Copy high rated movies", copy_hi_movies ) )
     # menu.add( MenuItem( "Show play history", show_play_history ) )
+    menu.add( MenuItem( "Update studio information", update_studio ) )
     while True:
         menu.show()
 
@@ -551,12 +800,22 @@ def show_stats_overall():
 
 def show_menu_main():
     menu = Menu()
-    # menu.add(MenuItem("Play random actor", play_random_actor))
+    menu.add(MenuItem("Play something", play_something))
     menu.add(MenuItem("Play by movie", show_menu_movie))
     menu.add(MenuItem("Play by actor", show_menu_actor))
+    menu.add(MenuItem("Play by studio", show_menu_studio))
     menu.add(MenuItem("Other options", show_menu_other))
     while True:
         menu.show()
+
+
+def update_studio():
+    global df_lockerdb
+    
+    print("Updating studio information")
+    s_studio = df_lockerdb.index.map(lambda x: x.split("\\")[0])
+    df_lockerdb['studio'] = s_studio
+    write_database()
 
 
 def write_database():
