@@ -27,26 +27,33 @@ def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
 
-    if not (os.path.exists(os.path.join(CURDIR, 'credentials.json')) or os.path.exists(os.path.join(CURDIR, 'token.json'))):
+    if not (
+        os.path.exists(os.path.join(CURDIR, "credentials.json"))
+        or os.path.exists(os.path.join(CURDIR, "token.json"))
+    ):
         print("ERROR: 'credentials.json' or 'token.json' does not exist")
         print("Please download the google credentials to the current path")
         exit(1)
 
     try:
-        gc = gspread.oauth(credentials_filename='credentials.json',
-                           authorized_user_filename='token.json')
-        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+        gc = gspread.oauth(
+            credentials_filename="credentials.json",
+            authorized_user_filename="token.json",
+        )
+        sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
     except:
-        os.remove(os.path.join(CURDIR, 'token.json'))
-        gc = gspread.oauth(credentials_filename='credentials.json',
-                           authorized_user_filename='token.json')
-        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+        os.remove(os.path.join(CURDIR, "token.json"))
+        gc = gspread.oauth(
+            credentials_filename="credentials.json",
+            authorized_user_filename="token.json",
+        )
+        sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
 
     ws = sheet.get_worksheet(0)
     df_lockerdb = pd.DataFrame(ws.get_all_records())
 
     # reset the index
-    df_lockerdb.set_index('rel_path', inplace=True)
+    df_lockerdb.set_index("rel_path", inplace=True)
 
     # treat data types
     df_lockerdb.playcount = pd.to_numeric(df_lockerdb.playcount)
@@ -74,7 +81,7 @@ def fix_movie_folder():
     arrDelete = []
     arrCase = []
     arrEmptyFolders = []
-    for root, subdirs, files in os.walk(config['DEFAULT']['MOVIEDIR']):
+    for root, subdirs, files in os.walk(config["DEFAULT"]["MOVIEDIR"]):
         if len(subdirs) + len(files) == 0:
             arrEmptyFolders.append(root)
 
@@ -82,7 +89,7 @@ def fix_movie_folder():
             path = os.path.join(root, file)
             try:
                 # extract the relative path
-                rel_path = path[len(config['DEFAULT']['MOVIEDIR'])::][1:]
+                rel_path = path[len(config["DEFAULT"]["MOVIEDIR"]) : :][1:]
 
                 # mark non movie files for delete
                 ext = os.path.splitext(path)[1]
@@ -97,7 +104,7 @@ def fix_movie_folder():
                     head, tail = os.path.split(head)
                     folder2 = folder1
                     folder1 = tail
-                    if head == config['DEFAULT']['MOVIEDIR']:
+                    if head == config["DEFAULT"]["MOVIEDIR"]:
                         break
                 actor = folder2
                 if actor != actor.title():
@@ -113,7 +120,8 @@ def fix_movie_folder():
         for folder in arrEmptyFolders:
             print(folder)
         confirm = input(
-            "\nThe above folders are empty and will be removed. Please confirm (y/n): ")
+            "\nThe above folders are empty and will be removed. Please confirm (y/n): "
+        )
         if confirm == "y":
             for folder in arrEmptyFolders:
                 os.rmdir(folder)
@@ -138,11 +146,11 @@ def fix_movie_folder():
         for file in arrDelete:
             print(file)
         confirm = input(
-            "\nThe above file are not movies and will be removed. Please confirm (y/n): ")
+            "\nThe above file are not movies and will be removed. Please confirm (y/n): "
+        )
         if confirm == "y":
             for rel_path in arrDelete:
-                send2trash(os.path.join(
-                    config['DEFAULT']["MOVIEDIR"], rel_path))
+                send2trash(os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path))
 
     # change actor names to title case
     elif len(arrCase) > 0:
@@ -188,17 +196,19 @@ def add_movie(rel_path):
     actor = folder2
 
     # create the entry
-    df = pd.DataFrame({
-        "rel_path": [rel_path],
-        "movie_rating": [0],
-        "actor_rating": [get_actor_rating(actor)],
-        "playcount": [0],
-        "actor": [actor],
-        "category": ["Straight"],
-        "studio": [rel_path.split("\\")[0]],
-        # "timestamp": [datetime.now().strftime("%Y-%m-%d_%H:%M:%S")]
-    })
-    df.set_index('rel_path', inplace=True)
+    df = pd.DataFrame(
+        {
+            "rel_path": [rel_path],
+            "movie_rating": [0],
+            "actor_rating": [get_actor_rating(actor)],
+            "playcount": [0],
+            "actor": [actor],
+            "category": ["Straight"],
+            "studio": [rel_path.split("\\")[0]],
+            # "timestamp": [datetime.now().strftime("%Y-%m-%d_%H:%M:%S")]
+        }
+    )
+    df.set_index("rel_path", inplace=True)
     df_lockerdb = pd.concat([df_lockerdb, df])
 
 
@@ -208,26 +218,27 @@ def refresh_db():
     # check for non-existent entries in database
     arrDelete = []
     for rel_path in df_lockerdb.index.to_list():
-        full_path = os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path)
+        full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
         if not os.path.exists(full_path):
             arrDelete.append(rel_path)
     if len(arrDelete) > 0:
         for rel_path in arrDelete:
             print(rel_path)
         delete = input(
-            "The above files are not found in filesystem. Remove them from database?\n 1. Yes\t 2. No ")
+            "The above files are not found in filesystem. Remove them from database?\n 1. Yes\t 2. No "
+        )
         if delete == "1":
             for rel_path in arrDelete:
                 df_lockerdb.drop(rel_path, inplace=True)
             print("Done removing files")
 
     # add any new files
-    for root, subdirs, files in os.walk(config['DEFAULT']["MOVIEDIR"]):
+    for root, subdirs, files in os.walk(config["DEFAULT"]["MOVIEDIR"]):
         for file in files:
             # add to database if not exist already
             # assuming non-movie files are already deleted
             path = os.path.join(root, file)
-            rel_path = path[len(config['DEFAULT']["MOVIEDIR"])::][1:]
+            rel_path = path[len(config["DEFAULT"]["MOVIEDIR"]) : :][1:]
             if rel_path not in df_lockerdb.index.to_list():
                 add_movie(rel_path)
 
@@ -243,13 +254,14 @@ def play_movie(rel_path):
         return
 
     # increment the playcount
-    df_lockerdb.at[rel_path,
-                   'playcount'] = int(df_lockerdb.at[rel_path, 'playcount']) + 1
+    df_lockerdb.at[rel_path, "playcount"] = (
+        int(df_lockerdb.at[rel_path, "playcount"]) + 1
+    )
 
     # open player
     player = config["DEFAULT"]["PLAYER"]
     # myassert(os.path.exists(player), "Movie player not found") #FIXME: unable to handle path with spaces
-    movie = os.path.join(config['DEFAULT']['MOVIEDIR'], rel_path)
+    movie = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
     print(f"Playing movie: {movie}")
     cmd = f"{player} " + movie
     os.system(cmd)
@@ -260,7 +272,7 @@ def play_movie(rel_path):
 # Play movies for a given actor. If no actor specified, prompt for one.
 def play_actor(actor=None):
     # generate list of actors
-    list_actors = df_lockerdb['actor'].drop_duplicates().to_list()
+    list_actors = df_lockerdb["actor"].drop_duplicates().to_list()
 
     # if no actor is specified, prompt for the actor name.
     # partial match is ok. list all actors matching the name.
@@ -280,7 +292,7 @@ def play_actor(actor=None):
         else:
             for i, actor in enumerate(arrActor):
                 print(i, actor)
-            print(i+1, "Go back")
+            print(i + 1, "Go back")
             i = int(input("Please select an actor: "))
             assert 0 <= i <= len(arrActor), "Invalid input"
             if i == len(arrActor):
@@ -288,7 +300,7 @@ def play_actor(actor=None):
             actor = arrActor[i]
 
     # select a random movie for the actor
-    select = df_lockerdb['actor'] == actor
+    select = df_lockerdb["actor"] == actor
     while True:
         nrows, _ = df_lockerdb[select].shape
 
@@ -298,8 +310,7 @@ def play_actor(actor=None):
         show_stats_movie(rel_path)
 
         # # play the movie on user request
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
             play_movie(rel_path)
             break
@@ -312,29 +323,41 @@ def play_actor(actor=None):
             print("ERROR: Invalid choice")
             break
 
+
 def play_something():
-    arr = [ play_random_actor, play_random_movie, play_rated_actor, play_rated_movie, 
-            play_unrated_actor, play_unrated_movie, play_random_studio] 
-    idx = random.randint(0, len(arr)-1)
+    arr = [
+        play_random_actor,
+        play_random_movie,
+        play_rated_actor,
+        play_rated_movie,
+        play_unrated_actor,
+        play_unrated_movie,
+        play_random_studio,
+    ]
+    idx = random.randint(0, len(arr) - 1)
+    print()
+    print(arr[idx])
+    print()
+    input("Press Enter to continue...")
     arr[idx]()
 
-def play_rated_movie() :
+
+def play_rated_movie():
     print("\nPlay a high rated movie")
 
     # create a list of movies with at least given rating
-    select = pd.to_numeric(df_lockerdb['movie_rating']) >= MINRATING
+    select = pd.to_numeric(df_lockerdb["movie_rating"]) >= MINRATING
     arrMovies = df_lockerdb[select].index.to_list()
 
     # randomize and play movie from the list
     while True:
-        idx = random.randint(0, len(arrMovies)-1)
+        idx = random.randint(0, len(arrMovies) - 1)
         movie = arrMovies[idx]
         if movie is not None and not movie == "Unknown":
             show_stats_movie(movie)
 
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
-        
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+
         if choice == "1":
             play_movie(movie)
 
@@ -349,23 +372,23 @@ def play_rated_movie() :
             print("ERROR: Invalid choice")
             break
 
-def play_unrated_movie() :
+
+def play_unrated_movie():
     print("\nPlay a unrated movie")
 
     # create a list of movies with no rating
-    select = pd.to_numeric(df_lockerdb['movie_rating']) == 0
+    select = pd.to_numeric(df_lockerdb["movie_rating"]) == 0
     arrMovies = df_lockerdb[select].index.to_list()
 
     # randomize and play movie from the list
     while True:
-        idx = random.randint(0, len(arrMovies)-1)
+        idx = random.randint(0, len(arrMovies) - 1)
         movie = arrMovies[idx]
         if movie is not None and not movie == "Unknown":
             show_stats_movie(movie)
 
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
-        
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+
         if choice == "1":
             play_movie(movie)
 
@@ -393,8 +416,7 @@ def play_random_movie():
         show_stats_movie(df_lockerdb.iloc[idx].name)
 
         # play the movie on user request
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
             play_movie(df_lockerdb.iloc[idx].name)
             break
@@ -411,7 +433,7 @@ def play_random_movie():
 def play_random_actor():
     print("\nPlay a random actor")
 
-    list_actors = df_lockerdb['actor'].drop_duplicates().to_list()
+    list_actors = df_lockerdb["actor"].drop_duplicates().to_list()
 
     while True:
         idx = random.randrange(0, len(list_actors), 1)
@@ -419,8 +441,7 @@ def play_random_actor():
         if actor is not None and not actor == "Unknown":
             show_stats_actor(actor)
 
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
             play_actor(actor)
         elif choice == "2":
@@ -437,18 +458,17 @@ def play_rated_actor():
     print("\nPlay movie for a high rated actor")
 
     # create a list of actors with at least given rating
-    select = pd.to_numeric(df_lockerdb['actor_rating']) >= MINRATING
-    actorlist = df_lockerdb[select]['actor'].unique()
+    select = pd.to_numeric(df_lockerdb["actor_rating"]) >= MINRATING
+    actorlist = df_lockerdb[select]["actor"].unique()
 
     # randomize and play actor from the list
     while True:
-        idx = random.randint(0, len(actorlist)-1)
+        idx = random.randint(0, len(actorlist) - 1)
         actor = actorlist[idx]
         if actor is not None and not actor == "Unknown":
             show_stats_actor(actor)
 
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
             play_actor(actor)
 
@@ -462,23 +482,23 @@ def play_rated_actor():
         else:
             print("ERROR: Invalid choice")
             break
+
 
 def play_unrated_actor():
     print("\nPlay movie for a unrated actor")
 
     # create a list of actors with at least given rating
-    select = pd.to_numeric(df_lockerdb['actor_rating']) == 0
-    actorlist = df_lockerdb[select]['actor'].unique()
+    select = pd.to_numeric(df_lockerdb["actor_rating"]) == 0
+    actorlist = df_lockerdb[select]["actor"].unique()
 
     # randomize and play actor from the list
     while True:
-        idx = random.randint(0, len(actorlist)-1)
+        idx = random.randint(0, len(actorlist) - 1)
         actor = actorlist[idx]
         if actor is not None and not actor == "Unknown":
             show_stats_actor(actor)
 
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":
             play_actor(actor)
 
@@ -493,17 +513,18 @@ def play_unrated_actor():
             print("ERROR: Invalid choice")
             break
 
+
 # Play movies for a given studio. If no studio specified, prompt for one.
 def play_studio(studio=None):
     # generate list of studios
-    arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
+    arrstudio = df_lockerdb["studio"].drop_duplicates().to_list()
     arrstudio.sort()
 
     # if no studio is specified, prompt for the studio name.
     if studio is None:
         assert len(arrstudio) != 0, "No such studio found"
         for i, studio in enumerate(arrstudio):
-            print(i+1, studio)
+            print(i + 1, studio)
         print(0, "Go back")
         i = int(input("Please select an studio: ")) - 1
         assert -1 <= i < len(arrstudio), "Invalid input"
@@ -512,7 +533,7 @@ def play_studio(studio=None):
         studio = arrstudio[i]
 
     # select a random movie for the studio
-    select = df_lockerdb['studio'] == studio
+    select = df_lockerdb["studio"] == studio
     while True:
         nrows, _ = df_lockerdb[select].shape
         # get a random file
@@ -521,8 +542,7 @@ def play_studio(studio=None):
         show_stats_movie(rel_path)
 
         # play the movie on user request
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
             play_movie(rel_path)
             break
@@ -535,22 +555,23 @@ def play_studio(studio=None):
             print("ERROR: Invalid choice")
             break
 
+
 # Play movies for a given studio. If no studio specified, prompt for one.
 def play_category(category=None):
     # generate list of category
-    arrcategory = df_lockerdb['category'].drop_duplicates().to_list()
+    arrcategory = df_lockerdb["category"].drop_duplicates().to_list()
 
     # if no category is specified, select a random category
     if category is None:
         assert len(arrcategory) != 0, "No such category found"
-        idx = random.randint(0, len(arrcategory)-1)
+        idx = random.randint(0, len(arrcategory) - 1)
         assert 0 <= idx < len(arrcategory), "Invalid input"
         category = arrcategory[idx]
 
     print(f"\nSelected category is {category}")
 
     # select a random movie for the category
-    select = df_lockerdb['category'] == category
+    select = df_lockerdb["category"] == category
     while True:
         nrows, _ = df_lockerdb[select].shape
         # get a random file
@@ -560,8 +581,7 @@ def play_category(category=None):
         myprint(df_lockerdb[select].iloc[idx])
 
         # play the movie on user request
-        choice = input(
-            "\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
         if choice == "1":  # Play
             rel_path = df_lockerdb[select].iloc[idx].name
             play_movie(rel_path)
@@ -579,7 +599,7 @@ def play_category(category=None):
 def play_random_studio():
     print("\nPlay a random studio")
 
-    list_studios = df_lockerdb['studio'].drop_duplicates().to_list()
+    list_studios = df_lockerdb["studio"].drop_duplicates().to_list()
 
     while True:
         idx = random.randrange(0, len(list_studios), 1)
@@ -587,11 +607,11 @@ def play_random_studio():
         print(f"Selected studio is: {studio}")
         play_studio(studio)
 
+
 def show_stats_actor(actorname):
     # calculate number of movies
     select = df_lockerdb["actor"] == actorname
-    col = df_lockerdb.columns.get_loc(
-        'actor_rating')  # get column index from name
+    col = df_lockerdb.columns.get_loc("actor_rating")  # get column index from name
     cnt_movies, _ = df_lockerdb[select].shape
 
     # print all values
@@ -599,22 +619,22 @@ def show_stats_actor(actorname):
     actor_rating = df_lockerdb[select].iloc[0, col]
     print("Actor rating:", actor_rating)
     print("Total movies of this actor:", cnt_movies)
-    print("Movies played for this actor:",
-          df_lockerdb[select]['playcount'].sum())
+    print("Movies played for this actor:", df_lockerdb[select]["playcount"].sum())
+
 
 def show_stats_movie(rel_path):
     # print all values
     print("Selected movie:", os.path.basename(rel_path))
-    print("Movie rating:", df_lockerdb.at[rel_path, 'movie_rating'])
-    print("Actor:", df_lockerdb.at[rel_path, 'actor'])
-    print("Actor Rating:", df_lockerdb.at[rel_path, 'actor_rating'])
-    print("Category:", df_lockerdb.at[rel_path, 'category'])
-    print("Studio:", df_lockerdb.at[rel_path, 'studio'])
+    print("Movie rating:", df_lockerdb.at[rel_path, "movie_rating"])
+    print("Actor:", df_lockerdb.at[rel_path, "actor"])
+    print("Actor Rating:", df_lockerdb.at[rel_path, "actor_rating"])
+    print("Category:", df_lockerdb.at[rel_path, "category"])
+    print("Studio:", df_lockerdb.at[rel_path, "studio"])
+
 
 def get_actor_rating(actorname):
     select = df_lockerdb["actor"] == actorname
-    col = df_lockerdb.columns.get_loc(
-        'actor_rating')  # get column index from name
+    col = df_lockerdb.columns.get_loc("actor_rating")  # get column index from name
     nrows, _ = df_lockerdb[select].shape
     if nrows == 0:
         actor_rating = 0
@@ -627,7 +647,7 @@ def get_actor_rating(actorname):
 
 def delete_movie(rel_path):
     print("deleting file: ", rel_path)
-    send2trash(os.path.join(config['DEFAULT']["MOVIEDIR"], rel_path))
+    send2trash(os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path))
     try:
         df_lockerdb.drop(rel_path, inplace=True)
     except:
@@ -637,7 +657,7 @@ def delete_movie(rel_path):
 def show_menu_postplay(rel_path, back=False):
     menu = Menu(show_menu_main)
 
-    actor = df_lockerdb.at[rel_path, 'actor']
+    actor = df_lockerdb.at[rel_path, "actor"]
     menu.add(MenuItem("Repeat actor", lambda: play_actor(actor)))
 
     def iupdate_stats():
@@ -646,52 +666,54 @@ def show_menu_postplay(rel_path, back=False):
         for i, field in enumerate(list_fields):
             print(i, field)
         col = int(input("\nSelect stat to update: "))
-        
-        if list_fields[col] == 'movie_rating':
+
+        if list_fields[col] == "movie_rating":
             value = input("Enter value: ")
-            df_lockerdb.at[rel_path, 'movie_rating'] = int(value)
-        elif list_fields[col] == 'actor_rating':
+            df_lockerdb.at[rel_path, "movie_rating"] = int(value)
+        elif list_fields[col] == "actor_rating":
             value = input("Enter value: ")
-            actor = df_lockerdb.at[rel_path, 'actor']
-            select = df_lockerdb['actor'] == actor
+            actor = df_lockerdb.at[rel_path, "actor"]
+            select = df_lockerdb["actor"] == actor
             list_select = df_lockerdb[select].index.to_list()
             arr = []
             for _ in range(len(list_select)):
                 arr.append(int(value))
-            df_lockerdb.loc[list_select, 'actor_rating'] = arr
-        elif list_fields[col] == 'studio':
-            arrstudio = df_lockerdb['studio'].drop_duplicates().to_list()
+            df_lockerdb.loc[list_select, "actor_rating"] = arr
+        elif list_fields[col] == "studio":
+            arrstudio = df_lockerdb["studio"].drop_duplicates().to_list()
             arrstudio.sort()
             for i, studio in enumerate(arrstudio):
-                print(i+1, studio)
+                print(i + 1, studio)
             print(0, "Something else")
             i = int(input("Please select a studio: ")) - 1
             assert -1 <= i < len(arrstudio), "Invalid input"
             if i == -1:
                 studio = input("Enter studio name: ")
             else:
-                studio = arrstudio[i]            
-            df_lockerdb.at[rel_path, 'studio'] = studio
-        elif list_fields[col] == 'category':
-            arrcategory = df_lockerdb['category'].drop_duplicates().to_list()
+                studio = arrstudio[i]
+            df_lockerdb.at[rel_path, "studio"] = studio
+        elif list_fields[col] == "category":
+            arrcategory = df_lockerdb["category"].drop_duplicates().to_list()
             for i, category in enumerate(arrcategory):
-                print(i+1, category)
+                print(i + 1, category)
             print(0, "Something else")
             i = int(input("Please select an category: ")) - 1
             assert -1 <= i < len(arrcategory), "Invalid input"
             if i == -1:
                 category = input("Enter category name: ")
             else:
-                category = arrcategory[i]            
-            df_lockerdb.at[rel_path, 'category'] = category
+                category = arrcategory[i]
+            df_lockerdb.at[rel_path, "category"] = category
         else:
             myprint(f"Cant edit field: {list_fields[col]}")
+
     menu.add(MenuItem("Update stats", iupdate_stats))
 
     def idelete_movie():
         delete = input("Are you sure to delete this movie?\n 1. Yes\t 2. No ")
         if delete == "1":
             delete_movie(rel_path)
+
     menu.add(MenuItem("Delete movie", idelete_movie))
 
     def idelete_actor():
@@ -699,10 +721,11 @@ def show_menu_postplay(rel_path, back=False):
         delete = input("1. Yes\t 2. No ")
         if delete == "1":
             # FIXME: exclude movies with high rating
-            select = df_lockerdb['actor'] == actor
+            select = df_lockerdb["actor"] == actor
             arrDelete = df_lockerdb[select].index.to_list()
             for idx in arrDelete:
                 delete_movie(idx)
+
     menu.add(MenuItem("Delete actor", idelete_actor))
 
     while True:
@@ -713,8 +736,8 @@ def show_menu_postplay(rel_path, back=False):
 def show_menu_movie():
     menu = Menu()
     menu.add(MenuItem("Play a random movie", play_random_movie))
-    menu.add( MenuItem( "Play a hi rated movie", play_rated_movie ) )
-    menu.add( MenuItem( "Play an unrated movie", play_unrated_movie ) )
+    menu.add(MenuItem("Play a hi rated movie", play_rated_movie))
+    menu.add(MenuItem("Play an unrated movie", play_unrated_movie))
     while True:
         menu.show()
 
@@ -726,7 +749,7 @@ def show_menu_actor():
     menu.add(MenuItem("Play random actor", play_random_actor))
     menu.add(MenuItem("Play selected actor", play_actor))
     menu.add(MenuItem("Play a high rated actor", play_rated_actor))
-    menu.add( MenuItem( "Play an unrated actor", play_unrated_actor ) )
+    menu.add(MenuItem("Play an unrated actor", play_unrated_actor))
     # menu.add( MenuItem( "Play an actor never played before", play_unplayed_actor ) )
     while True:
         menu.show()
@@ -742,6 +765,7 @@ def show_menu_studio():
     while True:
         menu.show()
 
+
 def show_menu_other():
     """show menu which could not fit into main menu"""
 
@@ -750,7 +774,7 @@ def show_menu_other():
     menu.add(MenuItem("Show overall statistics", show_stats_overall))
     # menu.add( MenuItem( "Copy high rated movies", copy_hi_movies ) )
     # menu.add( MenuItem( "Show play history", show_play_history ) )
-    menu.add( MenuItem( "Update studio information", update_studio ) )
+    menu.add(MenuItem("Update studio information", update_studio))
     while True:
         menu.show()
 
@@ -766,8 +790,7 @@ def show_stats_overall():
     s_all_actors = df_lockerdb.actor.unique()
     s_played_actors = df_lockerdb[df_lockerdb.playcount > 0].actor.unique()
     cnt_actors = s_all_actors.size
-    cnt_actor_hi_rated = df_lockerdb[df_lockerdb.actor_rating > 4].actor.unique(
-    ).size
+    cnt_actor_hi_rated = df_lockerdb[df_lockerdb.actor_rating > 4].actor.unique().size
     cnt_actor_unplayed = s_all_actors.size - s_played_actors.size
     # compute unplayed actor
 
@@ -811,10 +834,10 @@ def show_menu_main():
 
 def update_studio():
     global df_lockerdb
-    
+
     print("Updating studio information")
     s_studio = df_lockerdb.index.map(lambda x: x.split("\\")[0])
-    df_lockerdb['studio'] = s_studio
+    df_lockerdb["studio"] = s_studio
     write_database()
 
 
@@ -822,23 +845,23 @@ def write_database():
     global df_lockerdb
 
     myprint("Writing database")
-    gc = gspread.oauth(credentials_filename='credentials.json',
-                       authorized_user_filename='token.json')
-    sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+    gc = gspread.oauth(
+        credentials_filename="credentials.json", authorized_user_filename="token.json"
+    )
+    sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
     ws = sheet.get_worksheet(0)
 
     # retreat data types
     df_lockerdb.playcount = df_lockerdb.playcount.map(lambda x: str(x))
     df_lockerdb.movie_rating = df_lockerdb.movie_rating.map(lambda x: str(x))
     df_lockerdb.actor_rating = df_lockerdb.actor_rating.map(lambda x: str(x))
-    df_lockerdb = df_lockerdb.fillna('')
+    df_lockerdb = df_lockerdb.fillna("")
 
     # reset index
-    _df_lockerdb = df_lockerdb.reset_index(names='rel_path')
+    _df_lockerdb = df_lockerdb.reset_index(names="rel_path")
 
     # write to server
-    ws.update([_df_lockerdb.columns.values.tolist()] +
-              _df_lockerdb.values.tolist())
+    ws.update([_df_lockerdb.columns.values.tolist()] + _df_lockerdb.values.tolist())
 
 
 def main():
