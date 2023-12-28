@@ -150,7 +150,10 @@ def fix_movie_folder():
         )
         if confirm == "y":
             for rel_path in arrDelete:
-                send2trash(os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path))
+                try:
+                    send2trash(os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path))
+                except:
+                    print("ERROR: Cant delete file from filesystem", rel_path)
 
     # change actor names to title case
     elif len(arrCase) > 0:
@@ -229,7 +232,10 @@ def refresh_db():
         )
         if delete == "1":
             for rel_path in arrDelete:
-                df_lockerdb.drop(rel_path, inplace=True)
+                try:
+                    df_lockerdb.drop(rel_path, inplace=True)
+                except:
+                    print("ERROR: Cant delete file from database", rel_path)
             print("Done removing files")
 
     # add any new files
