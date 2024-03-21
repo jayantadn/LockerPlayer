@@ -836,9 +836,7 @@ def write_database():
     global df_lockerdb
 
     myprint("Writing database")
-    gc = gspread.oauth(
-        credentials_filename="credentials.json", authorized_user_filename="token.json"
-    )
+    gc = gspread.service_account(filename="service_account.json")
     sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
     ws = sheet.get_worksheet(0)
 
