@@ -27,27 +27,12 @@ def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
 
-    if not (
-        os.path.exists(os.path.join(CURDIR, "credentials.json"))
-        or os.path.exists(os.path.join(CURDIR, "token.json"))
-    ):
-        print("ERROR: 'credentials.json' or 'token.json' does not exist")
-        print("Please download the google credentials to the current path")
+    if not (os.path.exists(os.path.join(CURDIR, "service_account.json"))):
+        print("ERROR: 'service_account.json' does not exist")
         exit(1)
 
-    try:
-        gc = gspread.oauth(
-            credentials_filename="credentials.json",
-            authorized_user_filename="token.json",
-        )
-        sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
-    except:
-        os.remove(os.path.join(CURDIR, "token.json"))
-        gc = gspread.oauth(
-            credentials_filename="credentials.json",
-            authorized_user_filename="token.json",
-        )
-        sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
+    gc = gspread.service_account(filename="service_account.json")
+    sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
 
     ws = sheet.get_worksheet(0)
     df_lockerdb = pd.DataFrame(ws.get_all_records())
