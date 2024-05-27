@@ -27,15 +27,18 @@ def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
 
-    if not (os.path.exists(os.path.join(CURDIR, "service_account.json"))):
-        print("ERROR: 'service_account.json' does not exist")
-        exit(1)
+    # if not (os.path.exists(os.path.join(CURDIR, "service_account.json"))):
+    #     print("ERROR: 'service_account.json' does not exist")
+    #     exit(1)
 
-    gc = gspread.service_account(filename="service_account.json")
-    sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
+    # gc = gspread.service_account(filename="service_account.json")
+    # sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
 
-    ws = sheet.get_worksheet(0)
-    df_lockerdb = pd.DataFrame(ws.get_all_records())
+    # ws = sheet.get_worksheet(0)
+    # df_lockerdb = pd.DataFrame(ws.get_all_records())
+
+    # read db from excel
+    df_lockerdb = pd.read_excel("LockerDB.xlsx")
 
     # reset the index
     df_lockerdb.set_index("rel_path", inplace=True)
