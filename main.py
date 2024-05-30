@@ -1,11 +1,6 @@
-# Import google apis
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-
 # import standard packages
 import pandas as pd
 import os.path
-import configparser
 import random
 from datetime import datetime
 import time
@@ -15,6 +10,7 @@ from send2trash import send2trash
 from utils import *
 from menu import *
 from const import *
+from gsheet import *
 
 # globals
 config = configparser.ConfigParser()
@@ -22,20 +18,19 @@ configfile = os.path.join(os.path.dirname(__file__), "config.ini")
 config.read(configfile)
 df_lockerdb = pd.DataFrame()
 
-
 def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
 
+    # read db from google sheet
     # if not (os.path.exists(os.path.join(CURDIR, "service_account.json"))):
     #     print("ERROR: 'service_account.json' does not exist")
     #     exit(1)
-
     # gc = gspread.service_account(filename="service_account.json")
     # sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
-
     # ws = sheet.get_worksheet(0)
     # df_lockerdb = pd.DataFrame(ws.get_all_records())
+
 
     # read db from excel
     df_lockerdb = pd.read_excel("LockerDB.xlsx")
@@ -48,6 +43,29 @@ def gsheet_init():
     df_lockerdb.movie_rating = pd.to_numeric(df_lockerdb.movie_rating)
     df_lockerdb.actor_rating = pd.to_numeric(df_lockerdb.actor_rating)
     df_lockerdb.studio = df_lockerdb.studio.astype(str)
+
+
+def gsheet_write():
+    global df_lockerdb
+
+    # retreat data types
+    df_lockerdb.playcount = df_lockerdb.playcount.map(lambda x: str(x))
+    df_lockerdb.movie_rating = df_lockerdb.movie_rating.map(lambda x: str(x))
+    df_lockerdb.actor_rating = df_lockerdb.actor_rating.map(lambda x: str(x))
+    df_lockerdb = df_lockerdb.fillna("")
+
+    # reset index
+    _df_lockerdb = df_lockerdb.reset_index(names="rel_path")
+
+    # write db to google sheet
+    # myprint("Writing database")
+    # gc = gspread.service_account(filename="service_account.json")
+    # sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
+    # ws = sheet.get_worksheet(0)
+    # ws.update([_df_lockerdb.columns.values.tolist()] + _df_lockerdb.values.tolist())
+
+    # write db to excel
+    _df_lockerdb.to_excel("LockerDB.xlsx", index=False)
 
 
 def fix_movie_folder():
@@ -236,7 +254,7 @@ def refresh_db():
             if rel_path not in df_lockerdb.index.to_list():
                 add_movie(rel_path)
 
-    write_database()
+    gsheet_write()
     print("\nDatabase refresh completed.")
 
 
@@ -399,7 +417,8 @@ def play_unrated_movie():
 
 
 def play_random_movie():
-    print("\nPlay a random movie")
+    print("\nPlay a random movie")   
+    print(df_lockerdb)
 
     while True:
         nrows, _ = df_lockerdb.shape
@@ -724,7 +743,7 @@ def show_menu_postplay(rel_path, back=False):
 
     while True:
         menu.show()
-        write_database()
+        gsheet_write()
 
 
 def show_menu_movie():
@@ -832,28 +851,7 @@ def update_studio():
     print("Updating studio information")
     s_studio = df_lockerdb.index.map(lambda x: x.split("\\")[0])
     df_lockerdb["studio"] = s_studio
-    write_database()
-
-
-def write_database():
-    global df_lockerdb
-
-    myprint("Writing database")
-    gc = gspread.service_account(filename="service_account.json")
-    sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
-    ws = sheet.get_worksheet(0)
-
-    # retreat data types
-    df_lockerdb.playcount = df_lockerdb.playcount.map(lambda x: str(x))
-    df_lockerdb.movie_rating = df_lockerdb.movie_rating.map(lambda x: str(x))
-    df_lockerdb.actor_rating = df_lockerdb.actor_rating.map(lambda x: str(x))
-    df_lockerdb = df_lockerdb.fillna("")
-
-    # reset index
-    _df_lockerdb = df_lockerdb.reset_index(names="rel_path")
-
-    # write to server
-    ws.update([_df_lockerdb.columns.values.tolist()] + _df_lockerdb.values.tolist())
+    gsheet_write()
 
 
 def main():
