@@ -5,12 +5,12 @@ import random
 from datetime import datetime
 import time
 from send2trash import send2trash
+import configparser
 
 # import custom packages
 from utils import *
 from menu import *
 from const import *
-from gsheet import *
 
 # globals
 config = configparser.ConfigParser()
