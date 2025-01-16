@@ -28,4 +28,4 @@ import os
 CURDIR = os.path.dirname(sys.argv[0])
 TMPDIR = os.path.join(CURDIR, "tmp")
 EXTLIST = [".m4v", ".f4v", ".mp4", ".MP4", ".mkv", ".avi", ".wmv", ".flv", ".mov", ".mpg", ".mpeg", ".264"]
-MINRATING = 5
+MINRATING = 4

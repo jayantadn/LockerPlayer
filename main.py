@@ -33,7 +33,7 @@ def gsheet_init():
 
 
     # read db from excel
-    df_lockerdb = pd.read_excel("LockerDB.xlsx")
+    df_lockerdb = pd.read_excel(config["DEFAULT"]["EXCEL"])
 
     # reset the index
     df_lockerdb.set_index("rel_path", inplace=True)
@@ -65,7 +65,7 @@ def gsheet_write():
     # ws.update([_df_lockerdb.columns.values.tolist()] + _df_lockerdb.values.tolist())
 
     # write db to excel
-    _df_lockerdb.to_excel("LockerDB.xlsx", index=False)
+    _df_lockerdb.to_excel(config["DEFAULT"]["EXCEL"], index=False)
 
 
 def fix_movie_folder():
@@ -358,7 +358,7 @@ def play_rated_movie():
     print("\nPlay a high rated movie")
 
     # create a list of movies with at least given rating
-    select = pd.to_numeric(df_lockerdb["movie_rating"]) >= MINRATING
+    select = pd.to_numeric(df_lockerdb["movie_rating"]) >= 5
     arrMovies = df_lockerdb[select].index.to_list()
 
     # randomize and play movie from the list
