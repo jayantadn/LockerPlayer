@@ -1,4 +1,5 @@
 # import standard packages
+import shutil
 import pandas as pd
 import os.path
 import random
@@ -18,6 +19,7 @@ configfile = os.path.join(os.path.dirname(__file__), "config.ini")
 config.read(configfile)
 df_lockerdb = pd.DataFrame()
 
+
 def gsheet_init():
     global df_lockerdb
     myprint("Loading database")
@@ -30,7 +32,6 @@ def gsheet_init():
     # sheet = gc.open_by_key(config["DEFAULT"]["GSHEET_ID"])
     # ws = sheet.get_worksheet(0)
     # df_lockerdb = pd.DataFrame(ws.get_all_records())
-
 
     # read db from excel
     df_lockerdb = pd.read_excel(config["DEFAULT"]["EXCEL"])
@@ -219,6 +220,31 @@ def add_movie(rel_path):
     )
     df.set_index("rel_path", inplace=True)
     df_lockerdb = pd.concat([df_lockerdb, df])
+
+
+def copy_hi_movies():
+    min_rating = int(input("Enter min rating: "))
+    destroot = input("Enter destination path: ")
+    max_size = int(input("Enter maximum size in GB: "))
+
+    # create a list of movies with at least given rating
+    select = pd.to_numeric(df_lockerdb["movie_rating"]) >= min_rating
+    arrMovies = df_lockerdb[select].index.to_list()
+
+    # copy the movies to a new folder
+    total_size = 0
+    for movie in arrMovies:
+        size = os.path.getsize(os.path.join(config["DEFAULT"]["MOVIEDIR"], movie))
+        total_size += size
+        if total_size > max_size * 1024 * 1024 * 1024:
+            break
+        print(f"Copying {movie}. Total size {total_size/1024/1024/1024:.2f} GB")
+        src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie)
+        dest = os.path.join(destroot, movie)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copyfile(src, dest)
+
+    print("Done copying high rated movies")
 
 
 def refresh_db():
@@ -417,7 +443,7 @@ def play_unrated_movie():
 
 
 def play_random_movie():
-    print("\nPlay a random movie")   
+    print("\nPlay a random movie")
     print(df_lockerdb)
 
     while True:
@@ -785,7 +811,7 @@ def show_menu_other():
     menu = Menu(show_menu_main)
     menu.add(MenuItem("Refresh database", refresh_db))
     menu.add(MenuItem("Show overall statistics", show_stats_overall))
-    # menu.add( MenuItem( "Copy high rated movies", copy_hi_movies ) )
+    menu.add(MenuItem("Copy high rated movies", copy_hi_movies))
     # menu.add( MenuItem( "Show play history", show_play_history ) )
     menu.add(MenuItem("Update studio information", update_studio))
     while True:
