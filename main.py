@@ -222,7 +222,7 @@ def add_movie(rel_path):
     df_lockerdb = pd.concat([df_lockerdb, df])
 
 
-def copy_hi_movies():
+def copy_rated_movies():
     min_rating = int(input("Enter min rating: "))
     destroot = input("Enter destination path: ")
     max_size = int(input("Enter maximum size in GB: "))
@@ -234,13 +234,15 @@ def copy_hi_movies():
     # copy the movies to a new folder
     total_size = 0
     for movie in arrMovies:
+        dest = os.path.join(destroot, movie)
+        if os.path.exists(dest):
+            continue
         size = os.path.getsize(os.path.join(config["DEFAULT"]["MOVIEDIR"], movie))
         total_size += size
         if total_size > max_size * 1024 * 1024 * 1024:
             break
         print(f"Copying {movie}. Total size {total_size/1024/1024/1024:.2f} GB")
         src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie)
-        dest = os.path.join(destroot, movie)
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         shutil.copyfile(src, dest)
 
@@ -811,7 +813,7 @@ def show_menu_other():
     menu = Menu(show_menu_main)
     menu.add(MenuItem("Refresh database", refresh_db))
     menu.add(MenuItem("Show overall statistics", show_stats_overall))
-    menu.add(MenuItem("Copy high rated movies", copy_hi_movies))
+    menu.add(MenuItem("Copy high rated movies", copy_rated_movies))
     # menu.add( MenuItem( "Show play history", show_play_history ) )
     menu.add(MenuItem("Update studio information", update_studio))
     while True:
