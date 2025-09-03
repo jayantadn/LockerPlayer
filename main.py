@@ -12,6 +12,7 @@ import configparser
 from utils import *
 from menu import *
 from const import *
+import platform
 
 # globals
 config = configparser.ConfigParser()
@@ -288,7 +289,9 @@ def refresh_db():
 
 def play_movie(rel_path):
     # filename validation
-    full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    full_path = f"{os.path.join(config['DEFAULT']['MOVIEDIR'], rel_path)}"
+    if platform.system() == "Linux":
+        full_path = full_path.replace("\\", "/")
     if not os.path.exists(full_path):
         print(f"File not found: {full_path}")
         return
@@ -302,8 +305,11 @@ def play_movie(rel_path):
     player = config["DEFAULT"]["PLAYER"]
     # myassert(os.path.exists(player), "Movie player not found") #FIXME: unable to handle path with spaces
     movie = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    if platform.system() == "Linux":
+        movie = movie.replace("\\", "/")
     print(f"Playing movie: {movie}")
-    cmd = f"{player} " + movie
+    cmd = f"{player} " + f"\"{movie}\""
+    print(cmd)
     os.system(cmd)
 
     show_menu_postplay(rel_path)
