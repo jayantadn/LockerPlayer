@@ -694,7 +694,10 @@ def get_actor_rating(actorname):
 
 def delete_movie(rel_path):
     print("deleting file: ", rel_path)
-    send2trash(os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path))
+    full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    if platform.system() == "Linux":
+        full_path = full_path.replace("\\", "/")
+    send2trash(full_path)
     try:
         df_lockerdb.drop(rel_path, inplace=True)
     except:
