@@ -308,7 +308,12 @@ def play_movie(rel_path):
     if platform.system() == "Linux":
         movie = movie.replace("\\", "/")
     print(f"Playing movie: {movie}")
-    cmd = f"{player} " + f"\"{movie}\""
+    # If player seems to be VLC, add fullscreen flag
+    player_basename = os.path.basename(player).lower()
+    if "vlc" in player_basename:
+        cmd = f"{player} --fullscreen \"{movie}\""
+    else:
+        cmd = f"{player} \"{movie}\""
     print(cmd)
     os.system(cmd)
 
