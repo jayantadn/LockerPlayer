@@ -7,6 +7,7 @@ from datetime import datetime
 import time
 from send2trash import send2trash
 import configparser
+import subprocess
 
 # import custom packages
 from utils import *
@@ -301,21 +302,41 @@ def play_movie(rel_path):
         int(df_lockerdb.at[rel_path, "playcount"]) + 1
     )
 
-    # open player
-    player = config["DEFAULT"]["PLAYER"]
-    # myassert(os.path.exists(player), "Movie player not found") #FIXME: unable to handle path with spaces
+    # open player (suppress player console logs on Linux)
+    # Sanitize player path (config may contain quotes)
+    raw_player = config["DEFAULT"]["PLAYER"].strip()
+    if (raw_player.startswith('"') and raw_player.endswith('"')) or (
+        raw_player.startswith("'") and raw_player.endswith("'")
+    ):
+        player = raw_player[1:-1]
+    else:
+        player = raw_player
     movie = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
     if platform.system() == "Linux":
         movie = movie.replace("\\", "/")
+
     print(f"Playing movie: {movie}")
-    # If player seems to be VLC, add fullscreen flag
+
+    # Build argument list (handles spaces in paths without manual quoting)
+    args = [player]
+    # Validate player path (either absolute file exists or resolvable in PATH)
+    if not (os.path.exists(player) or shutil.which(player)):
+        print("Movie player not found:", player)
+        return
     player_basename = os.path.basename(player).lower()
     if "vlc" in player_basename:
-        cmd = f"{player} --fullscreen \"{movie}\""
-    else:
-        cmd = f"{player} \"{movie}\""
-    print(cmd)
-    os.system(cmd)
+        args.append("--fullscreen")
+    args.append(movie)
+
+    # Run the player; on Linux silence stdout/stderr to avoid verbose logs
+    try:
+        if platform.system() == "Linux":
+            subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run(args)
+    except FileNotFoundError:
+        print("Movie player not found:", player)
+        return
 
     show_menu_postplay(rel_path)
 
