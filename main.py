@@ -780,6 +780,40 @@ def show_menu_postplay(rel_path, back=False):
             else:
                 category = arrcategory[i]
             df_lockerdb.at[rel_path, "category"] = category
+        elif list_fields[col] == "actor":
+            # Search-based actor selection
+            search_term = input("Enter actor name (or part of it): ").strip()
+            arractor = df_lockerdb["actor"].drop_duplicates().to_list()
+            
+            if not search_term:
+                # If empty search, allow manual entry
+                actor = input("Enter new actor name: ")
+            else:
+                # Filter actors based on search term (case-insensitive)
+                matching_actors = [actor for actor in arractor if search_term.lower() in actor.lower()]
+                
+                if not matching_actors:
+                    print(f"No actors found matching '{search_term}'.")
+                    actor = input("Enter new actor name: ")
+                elif len(matching_actors) == 1:
+                    actor = matching_actors[0]
+                    print(f"Selected actor: {actor}")
+                else:
+                    # Multiple matches found, show them
+                    matching_actors.sort()
+                    print(f"\nFound {len(matching_actors)} matching actors:")
+                    for i, actor in enumerate(matching_actors):
+                        print(f"{i + 1}. {actor}")
+                    print("0. Enter new actor name")
+                    
+                    choice = int(input("Please select an actor: ")) - 1
+                    assert -1 <= choice < len(matching_actors), "Invalid input"
+                    if choice == -1:
+                        actor = input("Enter new actor name: ")
+                    else:
+                        actor = matching_actors[choice]
+            
+            df_lockerdb.at[rel_path, "actor"] = actor
         else:
             myprint(f"Cant edit field: {list_fields[col]}")
 
