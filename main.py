@@ -236,15 +236,26 @@ def copy_rated_movies():
     # copy the movies to a new folder
     total_size = 0
     for movie in arrMovies:
-        dest = os.path.join(destroot, movie)
+        # Fix path separators for Linux compatibility
+        movie_path = movie
+        if platform.system() == "Linux":
+            movie_path = movie.replace("\\", "/")
+        
+        dest = os.path.join(destroot, movie_path)
         if os.path.exists(dest):
             continue
-        size = os.path.getsize(os.path.join(config["DEFAULT"]["MOVIEDIR"], movie))
+            
+        src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie_path)
+        if not os.path.exists(src):
+            print(f"Warning: Source file not found, skipping: {src}")
+            continue
+            
+        size = os.path.getsize(src)
         total_size += size
         if total_size > max_size * 1024 * 1024 * 1024:
             break
         print(f"Copying {movie}. Total size {total_size/1024/1024/1024:.2f} GB")
-        src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie)
+        
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         shutil.copyfile(src, dest)
 
