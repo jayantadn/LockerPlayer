@@ -358,7 +358,7 @@ def copy_random_movies():
     
     # Create Excel filename with timestamp (create empty file initially)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    excel_filename = f"random_movies_{timestamp}.xlsx"
+    excel_filename = f"LockerDB_mini.xlsx"
     excel_path = os.path.join(destroot, excel_filename)
     
     # Create empty dataframe with same structure as the database
@@ -468,6 +468,32 @@ def copy_random_movies():
         print(f"Excel database file updated with all copied movies: {excel_filename}")
     
     print(f"Done copying {len(copied_movies)} random movies ({current_size/1024/1024/1024:.2f} GB total)")
+
+def delete_movie(rel_path):
+    global df_lockerdb
+    print("deleting file: ", rel_path)
+    full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
+    if platform.system() == "Linux":
+        full_path = full_path.replace("\\", "/")
+    send2trash(full_path)
+    try:
+        df_lockerdb.drop(rel_path, inplace=True)
+    except:
+        print("ERROR: Cant delete file from database")
+    
+    # Check if total number of movies is less than 500
+    total_movies, _ = df_lockerdb.shape
+    if total_movies < 500:
+        # Create path to to_delete.txt file in MOVIEDIR
+        to_delete_file = os.path.join(config["DEFAULT"]["MOVIEDIR"], "to_delete.txt")
+        
+        # Create file if it doesn't exist, then append the rel_path
+        try:
+            with open(to_delete_file, "a", encoding="utf-8") as f:
+                f.write(rel_path + "\n")
+            print(f"Logged deletion to: {to_delete_file}")
+        except Exception as e:
+            print(f"ERROR: Could not write to to_delete.txt file: {e}")
 
 
 def refresh_db():
@@ -937,18 +963,6 @@ def get_actor_rating(actorname):
     return actor_rating
 
 
-def delete_movie(rel_path):
-    print("deleting file: ", rel_path)
-    full_path = os.path.join(config["DEFAULT"]["MOVIEDIR"], rel_path)
-    if platform.system() == "Linux":
-        full_path = full_path.replace("\\", "/")
-    send2trash(full_path)
-    try:
-        df_lockerdb.drop(rel_path, inplace=True)
-    except:
-        print("ERROR: Cant delete file from database")
-
-
 def show_menu_postplay(rel_path, back=False):
     menu = Menu(show_menu_main)
 
@@ -1049,7 +1063,7 @@ def show_menu_postplay(rel_path, back=False):
         print("Are you sure to delete all movies of", actor, "?")
         delete = input("1. Yes\t 2. No ")
         if delete == "1":
-            # FIXME: exclude movies with high rating
+            # TODO: exclude movies with high rating
             select = df_lockerdb["actor"] == actor
             arrDelete = df_lockerdb[select].index.to_list()
             for idx in arrDelete:
