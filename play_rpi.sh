@@ -79,7 +79,7 @@ play_movie() {
     
     # Start the movie player with fullscreen parameters for VLC
     if [[ "$PLAYER" == *"vlc"* ]]; then
-        "$PLAYER" --fullscreen --intf dummy --play-and-exit "$SELECTED_MOVIE" >/dev/null 2>&1
+        "$PLAYER" --fullscreen --play-and-exit "$SELECTED_MOVIE" >/dev/null 2>&1
     else
         "$PLAYER" "$SELECTED_MOVIE"
     fi
