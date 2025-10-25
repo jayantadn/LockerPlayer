@@ -8,6 +8,7 @@ import time
 from send2trash import send2trash
 import configparser
 import subprocess
+from tqdm import tqdm
 
 # import custom packages
 from utils import *
@@ -260,6 +261,211 @@ def copy_rated_movies():
         shutil.copyfile(src, dest)
 
     print("Done copying high rated movies")
+
+
+def copy_random_movies():
+    """Copy random movies from the database to a destination folder"""
+    destroot = input("Enter destination path: ")
+    
+    # Create destination directory if it doesn't exist
+    os.makedirs(destroot, exist_ok=True)
+    
+    # Calculate available space at destination
+    try:
+        statvfs = os.statvfs(destroot)
+        available_bytes = statvfs.f_frsize * statvfs.f_bavail
+        available_gb = available_bytes / (1024 * 1024 * 1024)
+        print(f"Available space at destination: {available_gb:.2f} GB")
+        
+        # Reserve 1 GB for safety margin
+        max_size_bytes = max(0, available_bytes - (1 * 1024 * 1024 * 1024))
+        max_size_gb = max_size_bytes / (1024 * 1024 * 1024)
+        print(f"Will copy up to {max_size_gb:.2f} GB (leaving 1 GB safety margin)")
+    except (OSError, AttributeError):
+        # Fallback for systems that don't support statvfs or Windows
+        try:
+            import shutil as shutil_disk
+            total, used, free = shutil_disk.disk_usage(destroot)
+            available_bytes = free
+            available_gb = available_bytes / (1024 * 1024 * 1024)
+            print(f"Available space at destination: {available_gb:.2f} GB")
+            
+            # Reserve 1 GB for safety margin
+            max_size_bytes = max(0, available_bytes - (1 * 1024 * 1024 * 1024))
+            max_size_gb = max_size_bytes / (1024 * 1024 * 1024)
+            print(f"Will copy up to {max_size_gb:.2f} GB (leaving 1 GB safety margin)")
+        except:
+            print("Warning: Could not determine available disk space. Using 10 GB limit.")
+            max_size_bytes = 10 * 1024 * 1024 * 1024
+            max_size_gb = 10
+
+    # Get all movies from the database and shuffle them
+    all_movies = df_lockerdb.index.to_list()
+    random.shuffle(all_movies)  # Shuffle in place for random selection
+    
+    # First pass: determine which movies can fit
+    movies_to_copy = []
+    total_size = 0
+    
+    print("Analyzing movies to determine what fits...")
+    for movie in all_movies:
+        movie_path = movie
+        if platform.system() == "Linux":
+            movie_path = movie.replace("\\", "/")
+        
+        dest = os.path.join(destroot, movie_path)
+        if os.path.exists(dest):
+            continue
+            
+        src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie_path)
+        if not os.path.exists(src):
+            continue
+            
+        size = os.path.getsize(src)
+        
+        # Check if adding this file would exceed available space
+        if total_size + size > max_size_bytes:
+            break
+            
+        movies_to_copy.append((movie, size))
+        total_size += size
+    
+    if not movies_to_copy:
+        print("No movies to copy (either all exist at destination or no space available)")
+        return
+    
+    print(f"Will copy {len(movies_to_copy)} movies ({total_size/1024/1024/1024:.2f} GB total)")
+    
+    # Create list to track copied movies for Excel export
+    copied_movies = []
+    current_size = 0
+    
+    # Check if rsync is available on Linux
+    use_rsync = False
+    if platform.system() == "Linux":
+        try:
+            subprocess.run(['rsync', '--version'], capture_output=True, check=True)
+            use_rsync = True
+            print("Using rsync for faster copying on Linux")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("rsync not found, using cp with reflink")
+    
+    # Setup progress bars
+    progress_bar = tqdm(total=len(movies_to_copy), desc="Copying movies", unit="file")
+    size_bar = tqdm(total=total_size, desc="Total size", unit="B", unit_scale=True)
+    
+    # Create Excel filename with timestamp (create empty file initially)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    excel_filename = f"random_movies_{timestamp}.xlsx"
+    excel_path = os.path.join(destroot, excel_filename)
+    
+    # Create empty dataframe with same structure as the database
+    copied_df = pd.DataFrame(columns=['rel_path'] + df_lockerdb.columns.tolist())
+    copied_df.to_excel(excel_path, index=False)
+    print(f"Created Excel database file: {excel_filename} (will be updated with each copy)")
+    
+    print(f"Starting to copy {len(movies_to_copy)} movies...")
+    
+    for movie, file_size in movies_to_copy:
+        # Fix path separators for Linux compatibility
+        movie_path = movie
+        if platform.system() == "Linux":
+            movie_path = movie.replace("\\", "/")
+        
+        dest = os.path.join(destroot, movie_path)
+        src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie_path)
+        
+        # Create destination directory
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        
+        # Copy the file using the best available method
+        try:
+            if use_rsync:
+                # Use rsync with optimizations for large files
+                subprocess.run([
+                    'rsync', 
+                    '--progress',
+                    '--compress',
+                    '--partial',
+                    '--inplace',
+                    src, dest
+                ], check=True, capture_output=True)
+            elif platform.system() == "Linux":
+                # Use cp command with reflink for faster copying on compatible filesystems
+                subprocess.run(['cp', '--reflink=auto', src, dest], check=True)
+            else:
+                # Fallback to shutil for Windows
+                shutil.copyfile(src, dest)
+                
+            copied_movies.append(movie)
+            current_size += file_size
+            
+            # Update Excel file immediately after successful copy
+            try:
+                # Get the movie data from the main database
+                movie_data = df_lockerdb.loc[movie].copy()
+                movie_data_dict = movie_data.to_dict()
+                movie_data_dict['rel_path'] = movie
+                # Reset playcount to 0 for the copied movies
+                movie_data_dict['playcount'] = 0
+                
+                # Read current Excel file, append new row, and write back
+                current_df = pd.read_excel(excel_path)
+                new_row_df = pd.DataFrame([movie_data_dict])
+                updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
+                updated_df.to_excel(excel_path, index=False)
+                
+            except Exception as excel_error:
+                print(f"Warning: Could not update Excel file for {movie}: {excel_error}")
+            
+            # Update progress bars
+            progress_bar.update(1)
+            size_bar.update(file_size)
+            progress_bar.set_postfix({
+                'Current': os.path.basename(movie),
+                'Size': f"{current_size/1024/1024/1024:.2f}GB"
+            })
+            
+        except subprocess.CalledProcessError as e:
+            print(f"Error copying {movie}: {e}")
+            # Try fallback method
+            try:
+                shutil.copyfile(src, dest)
+                copied_movies.append(movie)
+                current_size += file_size
+                
+                # Update Excel file for fallback copy too
+                try:
+                    movie_data = df_lockerdb.loc[movie].copy()
+                    movie_data_dict = movie_data.to_dict()
+                    movie_data_dict['rel_path'] = movie
+                    # Reset playcount to 0 for the copied movies
+                    movie_data_dict['playcount'] = 0
+                    
+                    current_df = pd.read_excel(excel_path)
+                    new_row_df = pd.DataFrame([movie_data_dict])
+                    updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
+                    updated_df.to_excel(excel_path, index=False)
+                    
+                except Exception as excel_error:
+                    print(f"Warning: Could not update Excel file for {movie}: {excel_error}")
+                
+                progress_bar.update(1)
+                size_bar.update(file_size)
+            except Exception as fallback_error:
+                print(f"Fallback copy also failed for {movie}: {fallback_error}")
+        except Exception as e:
+            print(f"Unexpected error copying {movie}: {e}")
+    
+    # Close progress bars
+    progress_bar.close()
+    size_bar.close()
+
+    # Final summary (Excel file already exists and is up to date)
+    if copied_movies:
+        print(f"Excel database file updated with all copied movies: {excel_filename}")
+    
+    print(f"Done copying {len(copied_movies)} random movies ({current_size/1024/1024/1024:.2f} GB total)")
 
 
 def refresh_db():
@@ -894,6 +1100,7 @@ def show_menu_other():
     menu.add(MenuItem("Refresh database", refresh_db))
     menu.add(MenuItem("Show overall statistics", show_stats_overall))
     menu.add(MenuItem("Copy high rated movies", copy_rated_movies))
+    menu.add(MenuItem("Copy random movies", copy_random_movies))
     # menu.add( MenuItem( "Show play history", show_play_history ) )
     menu.add(MenuItem("Update studio information", update_studio))
     while True:

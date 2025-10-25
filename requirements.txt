@@ -8,3 +8,4 @@ configparser
 send2trash
 datetime
 openpyxl
+tqdm
