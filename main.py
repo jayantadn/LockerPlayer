@@ -721,6 +721,44 @@ def play_unrated_movie():
             break
 
 
+def play_unplayed_movie():
+    print("\nPlay an unplayed movie")
+
+    # create a list of movies with playcount = 0 (never played)
+    select = pd.to_numeric(df_lockerdb["playcount"]) == 0
+    arrMovies = df_lockerdb[select].index.to_list()
+
+    # check if there are any unplayed movies
+    if len(arrMovies) == 0:
+        print("No unplayed movies found!")
+        input("Press Enter to continue...")
+        return
+
+    # randomize and play movie from the list
+    while True:
+        idx = random.randint(0, len(arrMovies) - 1)
+        movie = arrMovies[idx]
+        if movie is not None and not movie == "Unknown":
+            show_stats_movie(movie)
+
+        choice = input("\n1. Play\t 2. Retry\t 0. Go back \nEnter your choice: ")
+
+        if choice == "1":
+            play_movie(movie)
+            break
+
+        elif choice == "2":
+            continue
+
+        elif choice == "0":
+            show_menu_main()
+            break
+
+        else:
+            print("ERROR: Invalid choice")
+            break
+
+
 def play_random_movie():
     print("\nPlay a random movie")
     print(df_lockerdb)
@@ -1167,7 +1205,8 @@ def show_stats_overall():
 
 def show_menu_main():
     menu = Menu()
-    menu.add(MenuItem("Play something", play_something))
+    # menu.add(MenuItem("Play something", play_something))
+    menu.add(MenuItem("Play unplayed movie", play_unplayed_movie))
     menu.add(MenuItem("Play by movie", show_menu_movie))
     menu.add(MenuItem("Play by actor", show_menu_actor))
     menu.add(MenuItem("Play by studio", show_menu_studio))
