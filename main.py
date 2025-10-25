@@ -356,15 +356,15 @@ def copy_random_movies():
     progress_bar = tqdm(total=len(movies_to_copy), desc="Copying movies", unit="file")
     size_bar = tqdm(total=total_size, desc="Total size", unit="B", unit_scale=True)
     
-    # Create Excel filename with timestamp (create empty file initially)
+    # Create CSV filename (create empty file initially)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    excel_filename = f"LockerDB_mini.xlsx"
-    excel_path = os.path.join(destroot, excel_filename)
+    csv_filename = f"LockerDB_mini.csv"
+    csv_path = os.path.join(destroot, csv_filename)
     
     # Create empty dataframe with same structure as the database
     copied_df = pd.DataFrame(columns=['rel_path'] + df_lockerdb.columns.tolist())
-    copied_df.to_excel(excel_path, index=False)
-    print(f"Created Excel database file: {excel_filename} (will be updated with each copy)")
+    copied_df.to_csv(csv_path, index=False)
+    print(f"Created CSV database file: {csv_filename} (will be updated with each copy)")
     
     print(f"Starting to copy {len(movies_to_copy)} movies...")
     
@@ -402,23 +402,25 @@ def copy_random_movies():
             copied_movies.append(movie)
             current_size += file_size
             
-            # Update Excel file immediately after successful copy
+            # Update CSV file immediately after successful copy
             try:
                 # Get the movie data from the main database
                 movie_data = df_lockerdb.loc[movie].copy()
                 movie_data_dict = movie_data.to_dict()
-                movie_data_dict['rel_path'] = movie
+                # Convert to Unix-style path for CSV file
+                unix_rel_path = movie.replace("\\", "/")
+                movie_data_dict['rel_path'] = unix_rel_path
                 # Reset playcount to 0 for the copied movies
                 movie_data_dict['playcount'] = 0
                 
-                # Read current Excel file, append new row, and write back
-                current_df = pd.read_excel(excel_path)
+                # Read current CSV file, append new row, and write back
+                current_df = pd.read_csv(csv_path)
                 new_row_df = pd.DataFrame([movie_data_dict])
                 updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
-                updated_df.to_excel(excel_path, index=False)
+                updated_df.to_csv(csv_path, index=False)
                 
-            except Exception as excel_error:
-                print(f"Warning: Could not update Excel file for {movie}: {excel_error}")
+            except Exception as csv_error:
+                print(f"Warning: Could not update CSV file for {movie}: {csv_error}")
             
             # Update progress bars
             progress_bar.update(1)
@@ -436,21 +438,23 @@ def copy_random_movies():
                 copied_movies.append(movie)
                 current_size += file_size
                 
-                # Update Excel file for fallback copy too
+                # Update CSV file for fallback copy too
                 try:
                     movie_data = df_lockerdb.loc[movie].copy()
                     movie_data_dict = movie_data.to_dict()
-                    movie_data_dict['rel_path'] = movie
+                    # Convert to Unix-style path for CSV file
+                    unix_rel_path = movie.replace("\\", "/")
+                    movie_data_dict['rel_path'] = unix_rel_path
                     # Reset playcount to 0 for the copied movies
                     movie_data_dict['playcount'] = 0
                     
-                    current_df = pd.read_excel(excel_path)
+                    current_df = pd.read_csv(csv_path)
                     new_row_df = pd.DataFrame([movie_data_dict])
                     updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
-                    updated_df.to_excel(excel_path, index=False)
+                    updated_df.to_csv(csv_path, index=False)
                     
-                except Exception as excel_error:
-                    print(f"Warning: Could not update Excel file for {movie}: {excel_error}")
+                except Exception as csv_error:
+                    print(f"Warning: Could not update CSV file for {movie}: {csv_error}")
                 
                 progress_bar.update(1)
                 size_bar.update(file_size)
@@ -463,9 +467,9 @@ def copy_random_movies():
     progress_bar.close()
     size_bar.close()
 
-    # Final summary (Excel file already exists and is up to date)
+    # Final summary (CSV file already exists and is up to date)
     if copied_movies:
-        print(f"Excel database file updated with all copied movies: {excel_filename}")
+        print(f"CSV database file updated with all copied movies: {csv_filename}")
     
     print(f"Done copying {len(copied_movies)} random movies ({current_size/1024/1024/1024:.2f} GB total)")
 
@@ -481,19 +485,14 @@ def delete_movie(rel_path):
     except:
         print("ERROR: Cant delete file from database")
     
-    # Check if total number of movies is less than 500
-    total_movies, _ = df_lockerdb.shape
-    if total_movies < 500:
-        # Create path to to_delete.txt file in MOVIEDIR
-        to_delete_file = os.path.join(config["DEFAULT"]["MOVIEDIR"], "to_delete.txt")
-        
-        # Create file if it doesn't exist, then append the rel_path
-        try:
-            with open(to_delete_file, "a", encoding="utf-8") as f:
-                f.write(rel_path + "\n")
-            print(f"Logged deletion to: {to_delete_file}")
-        except Exception as e:
-            print(f"ERROR: Could not write to to_delete.txt file: {e}")
+    # Create path to to_delete.txt file in MOVIEDIR
+    to_delete_file = os.path.join(config["DEFAULT"]["MOVIEDIR"], "to_delete.txt")
+    try:
+        with open(to_delete_file, "a", encoding="utf-8") as f:
+            f.write(rel_path + "\n")
+        print(f"Logged deletion to: {to_delete_file}")
+    except Exception as e:
+        print(f"ERROR: Could not write to to_delete.txt file: {e}")
 
 
 def refresh_db():
