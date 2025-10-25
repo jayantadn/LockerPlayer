@@ -48,6 +48,8 @@ def gsheet_init():
     df_lockerdb.actor_rating = pd.to_numeric(df_lockerdb.actor_rating)
     df_lockerdb.studio = df_lockerdb.studio.astype(str)
 
+    show_stats_overall()
+
 
 def gsheet_write():
     global df_lockerdb
