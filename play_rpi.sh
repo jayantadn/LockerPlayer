@@ -9,6 +9,7 @@ PLAYER="/usr/bin/vlc"
 EXCEL_FILE="./LockerDB_mini.csv"
 
 SELECTED_MOVIE=""
+SELECTED_LINE=""
 
 # Function to select a random movie from CSV
 select_random_movie() {
@@ -28,6 +29,9 @@ select_random_movie() {
     # Select a random line number (excluding header)
     RANDOM_LINE=$((RANDOM % TOTAL_LINES + 2))
     
+    # Store the selected line number for later use
+    SELECTED_LINE=$RANDOM_LINE
+    
     # Get the movie path from the selected line
     REL_PATH=$(sed -n "${RANDOM_LINE}p" "$EXCEL_FILE" | cut -d',' -f1)
     
@@ -35,8 +39,50 @@ select_random_movie() {
     SELECTED_MOVIE="${MOVIE_DIR}${REL_PATH}"
     
     echo "Selected movie: $REL_PATH"
-    echo "Full path: $SELECTED_MOVIE"
     echo ""
+    
+    return 0
+}
+
+# Function to increment playcount for the selected movie
+increment_playcount() {
+    if [ -z "$SELECTED_LINE" ]; then
+        echo "Error: No movie line selected for playcount update!"
+        return 1
+    fi
+    
+    if [ ! -f "$EXCEL_FILE" ]; then
+        echo "Error: CSV file $EXCEL_FILE not found for playcount update!"
+        return 1
+    fi
+    
+    # Create a temporary file
+    TEMP_FILE=$(mktemp)
+    
+    # Read the current line and extract the playcount
+    CURRENT_LINE=$(sed -n "${SELECTED_LINE}p" "$EXCEL_FILE")
+    CURRENT_PLAYCOUNT=$(echo "$CURRENT_LINE" | cut -d',' -f2)
+    
+    # Increment the playcount
+    NEW_PLAYCOUNT=$((CURRENT_PLAYCOUNT + 1))
+    
+    # Replace the playcount in the line
+    NEW_LINE=$(echo "$CURRENT_LINE" | sed "s/,${CURRENT_PLAYCOUNT},/,${NEW_PLAYCOUNT},/")
+    
+    # Create new CSV with updated playcount
+    {
+        # Copy header and lines before the selected line
+        sed -n "1,$((SELECTED_LINE-1))p" "$EXCEL_FILE"
+        # Add the updated line
+        echo "$NEW_LINE"
+        # Copy lines after the selected line
+        sed -n "$((SELECTED_LINE+1)),\$p" "$EXCEL_FILE"
+    } > "$TEMP_FILE"
+    
+    # Replace the original file with the updated one
+    mv "$TEMP_FILE" "$EXCEL_FILE"
+    
+    echo "Updated playcount to $NEW_PLAYCOUNT for selected movie."
     
     return 0
 }
@@ -57,11 +103,6 @@ play_movie() {
         fi
     fi
     
-    echo "Playing movie: $SELECTED_MOVIE"
-    echo "Using player: $PLAYER"
-    echo ""
-    echo "Starting playback..."
-    
     # Start the movie player with fullscreen parameters for VLC
     if [[ "$PLAYER" == *"vlc"* ]]; then
         "$PLAYER" --fullscreen --play-and-exit "$SELECTED_MOVIE" >/dev/null 2>&1
@@ -71,6 +112,9 @@ play_movie() {
     
     echo ""
     echo "Playback finished."
+    
+    # Increment playcount after successful playback
+    increment_playcount
 }
 
 # Function to show menu and handle user input
@@ -86,7 +130,6 @@ show_menu() {
         case $choice in
             1)
                 echo ""
-                echo "Selecting random movie..."
                 if select_random_movie; then
                     play_movie
                 fi
