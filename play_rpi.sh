@@ -52,13 +52,64 @@ select_random_movie() {
     # Store the selected line number for later use
     SELECTED_LINE=$RANDOM_LINE
     
-    # Get the movie path from the selected line
-    REL_PATH=$(sed -n "${RANDOM_LINE}p" "$EXCEL_FILE" | cut -d',' -f1)
+    # Get the full line for the selected movie
+    SELECTED_MOVIE_LINE=$(sed -n "${RANDOM_LINE}p" "$EXCEL_FILE")
+    
+    # Extract all fields from the CSV line
+    REL_PATH=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f1)
+    PLAYCOUNT=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f2)
+    MOVIE_RATING=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f3)
+    ACTOR_RATING=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f4)
+    ACTOR=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f5)
+    CATEGORY=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f6)
+    STUDIO=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f7)
     
     # Construct full movie path
     SELECTED_MOVIE="${MOVIE_DIR}${REL_PATH}"
     
     echo "Selected movie: $REL_PATH"
+    echo "  Actor: $ACTOR"
+    echo "  Studio: $STUDIO"
+    echo "  Category: $CATEGORY"
+    echo "  Play Count: $PLAYCOUNT"
+    echo "  Movie Rating: $MOVIE_RATING"
+    echo "  Actor Rating: $ACTOR_RATING"
+    echo ""
+    
+    # Ask user what to do with the selected movie
+    while true; do
+        echo "What would you like to do?"
+        echo "1. Play this movie"
+        echo "2. Select another random movie"
+        echo "0. Return to main menu"
+        echo -n "Please select an option (0-2): "
+        
+        read -r choice
+        
+        case $choice in
+            1)
+                echo ""
+                return 0  # Proceed to play the movie
+                ;;
+            2)
+                echo ""
+                echo "Selecting another random movie..."
+                echo ""
+                # Recursively call select_random_movie to pick a new one
+                select_random_movie
+                return $?
+                ;;
+            0)
+                echo ""
+                echo "Returning to main menu..."
+                return 1  # Return to main menu without playing
+                ;;
+            *)
+                echo ""
+                echo "Invalid option. Please select 0-2."
+                ;;
+        esac
+    done
     
     return 0
 }
