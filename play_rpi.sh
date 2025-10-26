@@ -229,6 +229,111 @@ select_high_rated_movie() {
     return 0
 }
 
+# Function to select a random unplayed movie from CSV (playcount = 0)
+select_unplayed_movie() {
+    if [ ! -f "$EXCEL_FILE" ]; then
+        echo "Error: CSV file $EXCEL_FILE not found!"
+        return 1
+    fi
+    
+    # Create temporary file with unplayed movies (playcount = 0)
+    TEMP_UNPLAYED=$(mktemp)
+    tail -n +2 "$EXCEL_FILE" | awk -F',' '$2 == 0' > "$TEMP_UNPLAYED"
+    
+    # Count unplayed movies
+    UNPLAYED_COUNT=$(wc -l < "$TEMP_UNPLAYED")
+    
+    if [ "$UNPLAYED_COUNT" -eq 0 ]; then
+        echo "No unplayed movies (playcount = 0) found in database!"
+        rm "$TEMP_UNPLAYED"
+        return 1
+    fi
+    
+    echo "Found $UNPLAYED_COUNT unplayed movies (playcount = 0)"
+    echo ""
+    
+    # Select a random line from unplayed movies
+    RANDOM_UNPLAYED_LINE=$((RANDOM % UNPLAYED_COUNT + 1))
+    
+    # Get the selected unplayed movie line
+    SELECTED_MOVIE_LINE=$(sed -n "${RANDOM_UNPLAYED_LINE}p" "$TEMP_UNPLAYED")
+    
+    # Find the corresponding line number in the original CSV file
+    REL_PATH_SEARCH=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f1)
+    SELECTED_LINE=$(tail -n +2 "$EXCEL_FILE" | grep -n "^$REL_PATH_SEARCH," | cut -d':' -f1)
+    SELECTED_LINE=$((SELECTED_LINE + 1))  # Adjust for header line
+    
+    # Clean up temporary file
+    rm "$TEMP_UNPLAYED"
+    
+    # Extract all fields from the CSV line
+    REL_PATH=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f1)
+    PLAYCOUNT=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f2)
+    MOVIE_RATING=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f3)
+    ACTOR=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f4)
+    CATEGORY=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f5)
+    STUDIO=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f6)
+    
+    # Get actor rating from actor_stats.csv
+    if [ -f "$ACTOR_STATS_FILE" ]; then
+        ACTOR_RATING=$(tail -n +2 "$ACTOR_STATS_FILE" | awk -F',' -v actor="$ACTOR" '$1 == actor {print $2; exit}')
+        if [ -z "$ACTOR_RATING" ]; then
+            ACTOR_RATING="0"  # Default if actor not found
+        fi
+    else
+        ACTOR_RATING="0"  # Default if file doesn't exist
+    fi
+    
+    # Construct full movie path
+    SELECTED_MOVIE="${MOVIE_DIR}${REL_PATH}"
+    
+    echo "Selected unplayed movie: $REL_PATH"
+    echo "  Actor: $ACTOR"
+    echo "  Studio: $STUDIO"
+    echo "  Category: $CATEGORY"
+    echo "  Play Count: $PLAYCOUNT"
+    echo "  Movie Rating: $MOVIE_RATING"
+    echo "  Actor Rating: $ACTOR_RATING"
+    echo ""
+    
+    # Ask user what to do with the selected movie
+    while true; do
+        echo "What would you like to do?"
+        echo "1. Play this movie"
+        echo "2. Select another unplayed movie"
+        echo "0. Return to main menu"
+        echo -n "Please select an option (0-2): "
+        
+        read -r choice
+        
+        case $choice in
+            1)
+                echo ""
+                return 0  # Proceed to play the movie
+                ;;
+            2)
+                echo ""
+                echo "Selecting another unplayed movie..."
+                echo ""
+                # Recursively call select_unplayed_movie to pick a new one
+                select_unplayed_movie
+                return $?
+                ;;
+            0)
+                echo ""
+                echo "Returning to main menu..."
+                return 1  # Return to main menu without playing
+                ;;
+            *)
+                echo ""
+                echo "Invalid option. Please select 0-2."
+                ;;
+        esac
+    done
+    
+    return 0
+}
+
 # Function to increment playcount for the selected movie
 increment_playcount() {
     if [ -z "$SELECTED_LINE" ]; then
@@ -662,8 +767,9 @@ show_menu() {
 
         echo "1. Play random movie"
         echo "2. Play high rated movie"
+        echo "3. Play unplayed movie"
         echo "0. Exit"
-        echo -n "Please select an option (0-2): "
+        echo -n "Please select an option (0-3): "
         
         read -r choice
         
@@ -682,6 +788,13 @@ show_menu() {
                 fi
                 echo ""
                 ;;
+            3)
+                echo ""
+                if select_unplayed_movie; then
+                    play_movie
+                fi
+                echo ""
+                ;;
             0)
                 echo ""
                 echo "Exiting LockerPlayer. Goodbye!"
@@ -689,7 +802,7 @@ show_menu() {
                 ;;
             *)
                 echo ""
-                echo "Invalid option. Please select 0-2."
+                echo "Invalid option. Please select 0-3."
                 echo ""
                 ;;
         esac
