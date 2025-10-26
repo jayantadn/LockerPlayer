@@ -322,6 +322,32 @@ def copy_random_movies():
     all_movies = df_lockerdb.index.to_list()
     random.shuffle(all_movies)  # Shuffle in place for random selection
     
+    # Load existing movies from CSV database before analyzing what to copy
+    csv_filename = f"LockerDB_mini.csv"
+    csv_path = os.path.join(destroot, csv_filename)
+    existing_movies = set()
+    
+    if os.path.exists(csv_path):
+        try:
+            existing_df = pd.read_csv(csv_path)
+            existing_movies = set(existing_df['rel_path'].tolist())
+            print(f"Found existing database with {len(existing_movies)} movies")
+        except Exception as e:
+            print(f"Warning: Could not read existing CSV file: {e}")
+    
+    # Load existing actors from actor stats
+    actor_stats_filename = "actor_stats.csv"
+    actor_stats_path = os.path.join(destroot, actor_stats_filename)
+    processed_actors = set()
+    
+    if os.path.exists(actor_stats_path):
+        try:
+            existing_actor_df = pd.read_csv(actor_stats_path)
+            processed_actors = set(existing_actor_df['actor'].tolist())
+            print(f"Found existing actor stats with {len(processed_actors)} actors")
+        except Exception as e:
+            print(f"Warning: Could not read existing actor stats file: {e}")
+    
     # First pass: determine which movies can fit
     movies_to_copy = []
     total_size = 0
@@ -332,8 +358,12 @@ def copy_random_movies():
         if platform.system() == "Linux":
             movie_path = movie.replace("\\", "/")
         
+        # Convert movie path to Unix-style for comparison with CSV
+        unix_movie_path = movie.replace("\\", "/")
+        
+        # Skip if movie already exists in destination folder OR in CSV database
         dest = os.path.join(destroot, movie_path)
-        if os.path.exists(dest):
+        if os.path.exists(dest) or unix_movie_path in existing_movies:
             continue
             
         src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie_path)
@@ -350,7 +380,7 @@ def copy_random_movies():
         total_size += size
     
     if not movies_to_copy:
-        print("No movies to copy (either all exist at destination or no space available)")
+        print("No new movies to copy (either all exist at destination/database or no space available)")
         return
     
     print(f"Will copy {len(movies_to_copy)} movies ({total_size/1024/1024/1024:.2f} GB total)")
@@ -373,24 +403,17 @@ def copy_random_movies():
     progress_bar = tqdm(total=len(movies_to_copy), desc="Copying movies", unit="file")
     size_bar = tqdm(total=total_size, desc="Total size", unit="B", unit_scale=True)
     
-    # Create CSV filename (create empty file initially)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    csv_filename = f"LockerDB_mini.csv"
-    csv_path = os.path.join(destroot, csv_filename)
+    # Initialize CSV files if they don't exist
+    if not os.path.exists(csv_path):
+        # Create empty dataframe with same structure as the database, excluding actor_rating
+        movie_columns = ['rel_path'] + [col for col in df_lockerdb.columns.tolist() if col != 'actor_rating']
+        copied_df = pd.DataFrame(columns=movie_columns)
+        copied_df.to_csv(csv_path, index=False)
     
-    # Create empty dataframe with same structure as the database, excluding actor_rating
-    movie_columns = ['rel_path'] + [col for col in df_lockerdb.columns.tolist() if col != 'actor_rating']
-    copied_df = pd.DataFrame(columns=movie_columns)
-    copied_df.to_csv(csv_path, index=False)
-    
-    # Create actor_stats.csv file
-    actor_stats_filename = "actor_stats.csv"
-    actor_stats_path = os.path.join(destroot, actor_stats_filename)
-    actor_stats_df = pd.DataFrame(columns=['actor', 'actor_rating', 'actor_category'])
-    actor_stats_df.to_csv(actor_stats_path, index=False)
-    
-    # Track unique actors to avoid duplicates in actor_stats.csv
-    processed_actors = set()
+    if not os.path.exists(actor_stats_path):
+        # Create empty actor_stats.csv file
+        actor_stats_df = pd.DataFrame(columns=['actor', 'actor_rating', 'actor_category'])
+        actor_stats_df.to_csv(actor_stats_path, index=False)
     
     for movie, file_size in movies_to_copy:
         # Fix path separators for Linux compatibility
@@ -533,10 +556,14 @@ def copy_random_movies():
 
     # Final summary (CSV files already exist and are up to date)
     if copied_movies:
-        print(f"Movie database file updated: {csv_filename}")
-        print(f"Actor stats file updated: {actor_stats_filename}")
+        if os.path.exists(csv_path) and len(existing_movies) > 0:
+            print(f"Movie database file updated (appended): {csv_filename}")
+            print(f"Actor stats file updated (appended): {actor_stats_filename}")
+        else:
+            print(f"Movie database file created: {csv_filename}")
+            print(f"Actor stats file created: {actor_stats_filename}")
     
-    print(f"Done copying {len(copied_movies)} random movies ({current_size/1024/1024/1024:.2f} GB total)")
+    print(f"Done copying {len(copied_movies)} new random movies ({current_size/1024/1024/1024:.2f} GB total)")
 
 def delete_movie(rel_path):
     global df_lockerdb
