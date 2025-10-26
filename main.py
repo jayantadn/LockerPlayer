@@ -392,8 +392,6 @@ def copy_random_movies():
     # Track unique actors to avoid duplicates in actor_stats.csv
     processed_actors = set()
     
-    print(f"Starting to copy {len(movies_to_copy)} movies...")
-    
     for movie, file_size in movies_to_copy:
         # Fix path separators for Linux compatibility
         movie_path = movie
