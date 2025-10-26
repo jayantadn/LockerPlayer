@@ -294,6 +294,82 @@ delete_movie() {
     echo "Deletion completed successfully."
 }
 
+# Function to delete the actor
+delete_actor() {
+    if [ -z "$SELECTED_LINE" ]; then
+        echo "Error: No movie selected for actor deletion!"
+        return 1
+    fi
+    
+    if [ ! -f "$EXCEL_FILE" ]; then
+        echo "Error: CSV file $EXCEL_FILE not found!"
+        return 1
+    fi
+    
+    # Get current movie info to extract actor name
+    CURRENT_LINE=$(sed -n "${SELECTED_LINE}p" "$EXCEL_FILE")
+    ACTOR_NAME=$(echo "$CURRENT_LINE" | cut -d',' -f5)
+    
+    echo "Actor: $ACTOR_NAME"
+    echo ""
+    
+    # Confirm deletion
+    while true; do
+        echo -n "Are you sure you want to delete ALL movies for actor '$ACTOR_NAME'? (y/n): "
+        read -r confirm
+        
+        case $confirm in
+            [Yy]*)
+                break
+                ;;
+            [Nn]*)
+                echo "Actor deletion cancelled."
+                return 0
+                ;;
+            *)
+                echo "Please enter 'y' for yes or 'n' for no."
+                ;;
+        esac
+    done
+    
+    # Log actor deletion to to_delete.txt
+    echo "actor=$ACTOR_NAME" >> "./to_delete.txt"
+    echo "Added actor deletion record to to_delete.txt"
+    
+    # Get all movie paths for this actor and delete physical files
+    DELETED_COUNT=0
+    while IFS=',' read -r rel_path playcount movie_rating actor_rating actor category studio; do
+        if [ "$actor" = "$ACTOR_NAME" ]; then
+            FULL_MOVIE_PATH="${MOVIE_DIR}${rel_path}"
+            if [ -f "$FULL_MOVIE_PATH" ]; then
+                rm "$FULL_MOVIE_PATH"
+                echo "Deleted: $rel_path"
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+            else
+                echo "Warning: File not found: $rel_path"
+            fi
+        fi
+    done < <(tail -n +2 "$EXCEL_FILE")
+    
+    # Update CSV file by removing all lines for this actor
+    TEMP_FILE=$(mktemp)
+    
+    # Keep header and all lines except those with the specified actor
+    {
+        # Copy header
+        head -n 1 "$EXCEL_FILE"
+        # Copy all lines except those with the specified actor
+        tail -n +2 "$EXCEL_FILE" | awk -F',' -v actor="$ACTOR_NAME" '$5 != actor'
+    } > "$TEMP_FILE"
+    
+    # Replace the original file with the updated one
+    mv "$TEMP_FILE" "$EXCEL_FILE"
+    
+    echo "Deleted $DELETED_COUNT physical files."
+    echo "Removed all database entries for actor: $ACTOR_NAME"
+    echo "Actor deletion completed successfully."
+}
+
 # Function to show post-play menu
 show_post_play_menu() {
     while true; do
@@ -302,8 +378,9 @@ show_post_play_menu() {
         echo "1. Rate movie"
         echo "2. Rate actor"
         echo "3. Delete movie"
+        echo "4. Delete actor"
         echo "0. Return to main menu"
-        echo -n "Please select an option (0-3): "
+        echo -n "Please select an option (0-4): "
         
         read -r choice
         
@@ -320,6 +397,10 @@ show_post_play_menu() {
                 echo ""
                 delete_movie
                 ;;
+            4)
+                echo ""
+                delete_actor
+                ;;
             0)
                 echo ""
                 echo "Returning to main menu..."
@@ -327,7 +408,7 @@ show_post_play_menu() {
                 ;;
             *)
                 echo ""
-                echo "Invalid option. Please select 0-3."
+                echo "Invalid option. Please select 0-4."
                 ;;
         esac
     done
