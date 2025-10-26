@@ -124,6 +124,111 @@ select_random_movie() {
     return 0
 }
 
+# Function to select a random high-rated movie from CSV (rating >= 5)
+select_high_rated_movie() {
+    if [ ! -f "$EXCEL_FILE" ]; then
+        echo "Error: CSV file $EXCEL_FILE not found!"
+        return 1
+    fi
+    
+    # Create temporary file with high-rated movies (rating >= 5)
+    TEMP_HIGH_RATED=$(mktemp)
+    tail -n +2 "$EXCEL_FILE" | awk -F',' '$3 >= 5' > "$TEMP_HIGH_RATED"
+    
+    # Count high-rated movies
+    HIGH_RATED_COUNT=$(wc -l < "$TEMP_HIGH_RATED")
+    
+    if [ "$HIGH_RATED_COUNT" -eq 0 ]; then
+        echo "No high-rated movies (rating >= 5) found in database!"
+        rm "$TEMP_HIGH_RATED"
+        return 1
+    fi
+    
+    echo "Found $HIGH_RATED_COUNT high-rated movies (rating >= 5)"
+    echo ""
+    
+    # Select a random line from high-rated movies
+    RANDOM_HIGH_RATED_LINE=$((RANDOM % HIGH_RATED_COUNT + 1))
+    
+    # Get the selected high-rated movie line
+    SELECTED_MOVIE_LINE=$(sed -n "${RANDOM_HIGH_RATED_LINE}p" "$TEMP_HIGH_RATED")
+    
+    # Find the corresponding line number in the original CSV file
+    REL_PATH_SEARCH=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f1)
+    SELECTED_LINE=$(tail -n +2 "$EXCEL_FILE" | grep -n "^$REL_PATH_SEARCH," | cut -d':' -f1)
+    SELECTED_LINE=$((SELECTED_LINE + 1))  # Adjust for header line
+    
+    # Clean up temporary file
+    rm "$TEMP_HIGH_RATED"
+    
+    # Extract all fields from the CSV line
+    REL_PATH=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f1)
+    PLAYCOUNT=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f2)
+    MOVIE_RATING=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f3)
+    ACTOR=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f4)
+    CATEGORY=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f5)
+    STUDIO=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f6)
+    
+    # Get actor rating from actor_stats.csv
+    if [ -f "$ACTOR_STATS_FILE" ]; then
+        ACTOR_RATING=$(tail -n +2 "$ACTOR_STATS_FILE" | awk -F',' -v actor="$ACTOR" '$1 == actor {print $2; exit}')
+        if [ -z "$ACTOR_RATING" ]; then
+            ACTOR_RATING="0"  # Default if actor not found
+        fi
+    else
+        ACTOR_RATING="0"  # Default if file doesn't exist
+    fi
+    
+    # Construct full movie path
+    SELECTED_MOVIE="${MOVIE_DIR}${REL_PATH}"
+    
+    echo "Selected high-rated movie: $REL_PATH"
+    echo "  Actor: $ACTOR"
+    echo "  Studio: $STUDIO"
+    echo "  Category: $CATEGORY"
+    echo "  Play Count: $PLAYCOUNT"
+    echo "  Movie Rating: $MOVIE_RATING"
+    echo "  Actor Rating: $ACTOR_RATING"
+    echo ""
+    
+    # Ask user what to do with the selected movie
+    while true; do
+        echo "What would you like to do?"
+        echo "1. Play this movie"
+        echo "2. Select another high-rated movie"
+        echo "0. Return to main menu"
+        echo -n "Please select an option (0-2): "
+        
+        read -r choice
+        
+        case $choice in
+            1)
+                echo ""
+                return 0  # Proceed to play the movie
+                ;;
+            2)
+                echo ""
+                echo "Selecting another high-rated movie..."
+                echo ""
+                # Recursively call select_high_rated_movie to pick a new one
+                select_high_rated_movie
+                return $?
+                ;;
+            0)
+                echo ""
+                echo "Returning to main menu..."
+                return 1  # Return to main menu without playing
+                ;;
+            *)
+                echo ""
+                echo "Invalid option. Please select 0-2."
+                ;;
+        esac
+    done
+    
+    return 0
+}
+
 # Function to increment playcount for the selected movie
 increment_playcount() {
     if [ -z "$SELECTED_LINE" ]; then
@@ -189,7 +294,7 @@ rate_movie() {
     echo ""
     
     while true; do
-        echo -n "Enter new movie rating (0-5, or 'c' to cancel): "
+        echo -n "Enter new movie rating (0-6, or 'c' to cancel): "
         read -r new_rating
         
         # Check if user wants to cancel
@@ -199,10 +304,10 @@ rate_movie() {
         fi
         
         # Validate numeric input
-        if [[ "$new_rating" =~ ^[0-9]+$ ]] && [ "$new_rating" -ge 0 ] && [ "$new_rating" -le 5 ]; then
+        if [[ "$new_rating" =~ ^[0-9]+$ ]] && [ "$new_rating" -ge 0 ] && [ "$new_rating" -le 6 ]; then
             break
         else
-            echo "Invalid input. Please enter a number between 0-5, or 'c' to cancel."
+            echo "Invalid input. Please enter a number between 0-6, or 'c' to cancel."
         fi
     done
     
@@ -260,7 +365,7 @@ rate_actor() {
     echo ""
     
     while true; do
-        echo -n "Enter new actor rating (0-10, or 'c' to cancel): "
+        echo -n "Enter new actor rating (0-6, or 'c' to cancel): "
         read -r new_rating
         
         # Check if user wants to cancel
@@ -270,10 +375,10 @@ rate_actor() {
         fi
         
         # Validate numeric input
-        if [[ "$new_rating" =~ ^[0-9]+$ ]] && [ "$new_rating" -ge 0 ] && [ "$new_rating" -le 10 ]; then
+        if [[ "$new_rating" =~ ^[0-9]+$ ]] && [ "$new_rating" -ge 0 ] && [ "$new_rating" -le 6 ]; then
             break
         else
-            echo "Invalid input. Please enter a number between 0-10, or 'c' to cancel."
+            echo "Invalid input. Please enter a number between 0-6, or 'c' to cancel."
         fi
     done
     
@@ -556,8 +661,9 @@ show_menu() {
     while true; do
 
         echo "1. Play random movie"
+        echo "2. Play high rated movie"
         echo "0. Exit"
-        echo -n "Please select an option (1 or 0): "
+        echo -n "Please select an option (0-2): "
         
         read -r choice
         
@@ -569,6 +675,13 @@ show_menu() {
                 fi
                 echo ""
                 ;;
+            2)
+                echo ""
+                if select_high_rated_movie; then
+                    play_movie
+                fi
+                echo ""
+                ;;
             0)
                 echo ""
                 echo "Exiting LockerPlayer. Goodbye!"
@@ -576,7 +689,7 @@ show_menu() {
                 ;;
             *)
                 echo ""
-                echo "Invalid option. Please select 1 or 0."
+                echo "Invalid option. Please select 0-2."
                 echo ""
                 ;;
         esac

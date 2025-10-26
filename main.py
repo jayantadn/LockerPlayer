@@ -10,6 +10,8 @@ import configparser
 import subprocess
 from tqdm import tqdm
 import stat
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # import custom packages
 from utils import *
@@ -266,6 +268,47 @@ def copy_rated_movies():
     print("Done copying high rated movies")
 
 
+def copy_single_movie(movie_data, config, destroot, use_rsync, df_lockerdb):
+    """Helper function to copy a single movie - used for parallel processing"""
+    movie, file_size = movie_data
+    
+    # Fix path separators for Linux compatibility
+    movie_path = movie
+    if platform.system() == "Linux":
+        movie_path = movie.replace("\\", "/")
+    
+    dest = os.path.join(destroot, movie_path)
+    src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie_path)
+    
+    # Create destination directory
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    
+    try:
+        # Copy the file using the best available method
+        if use_rsync:
+            # Use rsync with optimizations for large files
+            subprocess.run([
+                'rsync', 
+                '--progress',
+                '--compress-level=0',    # Disable compression for video files
+                '--whole-file',          # Don't use delta-transfer algorithm
+                '--inplace',            # Update destination files in-place
+                '--no-inc-recursive',   # Don't recursively scan directories
+                src, dest
+            ], check=True, capture_output=True)
+        elif platform.system() == "Linux":
+            # Use cp command with reflink for faster copying on compatible filesystems
+            subprocess.run(['cp', '--reflink=auto', src, dest], check=True)
+        else:
+            # Fallback to shutil for Windows
+            shutil.copyfile(src, dest)
+        
+        return movie, file_size, True, None
+        
+    except Exception as e:
+        return movie, file_size, False, str(e)
+
+
 def copy_random_movies():
     """Copy random movies from the database to a destination folder"""
     destroot = input("Enter destination path: ")
@@ -399,10 +442,6 @@ def copy_random_movies():
         except (subprocess.CalledProcessError, FileNotFoundError):
             print("rsync not found, using cp with reflink")
     
-    # Setup progress bars
-    progress_bar = tqdm(total=len(movies_to_copy), desc="Copying movies", unit="file")
-    size_bar = tqdm(total=total_size, desc="Total size", unit="B", unit_scale=True)
-    
     # Initialize CSV files if they don't exist
     if not os.path.exists(csv_path):
         # Create empty dataframe with same structure as the database, excluding actor_rating
@@ -415,70 +454,35 @@ def copy_random_movies():
         actor_stats_df = pd.DataFrame(columns=['actor', 'actor_rating', 'actor_category'])
         actor_stats_df.to_csv(actor_stats_path, index=False)
     
-    for movie, file_size in movies_to_copy:
-        # Fix path separators for Linux compatibility
-        movie_path = movie
-        if platform.system() == "Linux":
-            movie_path = movie.replace("\\", "/")
-        
-        dest = os.path.join(destroot, movie_path)
-        src = os.path.join(config["DEFAULT"]["MOVIEDIR"], movie_path)
-        
-        # Create destination directory
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
-        
-        # Copy the file using the best available method
-        try:
-            if use_rsync:
-                # Use rsync with optimizations for large files
-                subprocess.run([
-                    'rsync', 
-                    '--progress',
-                    '--compress',
-                    '--partial',
-                    '--inplace',
-                    src, dest
-                ], check=True, capture_output=True)
-            elif platform.system() == "Linux":
-                # Use cp command with reflink for faster copying on compatible filesystems
-                subprocess.run(['cp', '--reflink=auto', src, dest], check=True)
-            else:
-                # Fallback to shutil for Windows
-                shutil.copyfile(src, dest)
-                
-            copied_movies.append(movie)
-            current_size += file_size
-            
-            # Update CSV file immediately after successful copy
+    # Get number of parallel copies from config
+    max_workers = int(config["DEFAULT"].get("MAX_THREADS", "1"))
+    print(f"Using {max_workers} parallel threads for copying (configured in config.ini)")
+    
+    # Use threading lock for CSV file updates to prevent corruption
+    csv_lock = threading.Lock()
+    
+    def update_csv_files(movie, movie_data_dict, actor_rating, actor_name):
+        """Thread-safe CSV file updates"""
+        with csv_lock:
             try:
-                # Get the movie data from the main database
-                movie_data = df_lockerdb.loc[movie].copy()
-                movie_data_dict = movie_data.to_dict()
-                # Convert to Unix-style path for CSV file
-                unix_rel_path = movie.replace("\\", "/")
-                movie_data_dict['rel_path'] = unix_rel_path
-                # Reset playcount to 0 for the copied movies
-                movie_data_dict['playcount'] = 0
-                
                 # Remove actor_rating from movie data
                 if 'actor_rating' in movie_data_dict:
-                    actor_rating = movie_data_dict.pop('actor_rating')
-                    actor_name = movie_data_dict.get('actor', '')
+                    movie_data_dict.pop('actor_rating')
+                
+                # Add actor to actor_stats.csv if not already processed
+                if actor_name and actor_name not in processed_actors:
+                    processed_actors.add(actor_name)
                     
-                    # Add actor to actor_stats.csv if not already processed
-                    if actor_name and actor_name not in processed_actors:
-                        processed_actors.add(actor_name)
-                        
-                        # Read current actor_stats CSV file, append new row, and write back
-                        current_actor_df = pd.read_csv(actor_stats_path)
-                        new_actor_row = {
-                            'actor': actor_name,
-                            'actor_rating': actor_rating,
-                            'actor_category': ''  # Blank as requested
-                        }
-                        new_actor_row_df = pd.DataFrame([new_actor_row])
-                        updated_actor_df = pd.concat([current_actor_df, new_actor_row_df], ignore_index=True)
-                        updated_actor_df.to_csv(actor_stats_path, index=False)
+                    # Read current actor_stats CSV file, append new row, and write back
+                    current_actor_df = pd.read_csv(actor_stats_path)
+                    new_actor_row = {
+                        'actor': actor_name,
+                        'actor_rating': actor_rating,
+                        'actor_category': ''  # Blank as requested
+                    }
+                    new_actor_row_df = pd.DataFrame([new_actor_row])
+                    updated_actor_df = pd.concat([current_actor_df, new_actor_row_df], ignore_index=True)
+                    updated_actor_df.to_csv(actor_stats_path, index=False)
                 
                 # Read current CSV file, append new row, and write back
                 current_df = pd.read_csv(csv_path)
@@ -488,71 +492,53 @@ def copy_random_movies():
                 
             except Exception as csv_error:
                 print(f"Warning: Could not update CSV file for {movie}: {csv_error}")
+    
+    # Record start time for performance tracking
+    copy_start_time = time.time()
+    
+    # Copy files using ThreadPoolExecutor for parallel processing
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all copy tasks
+        future_to_movie = {
+            executor.submit(copy_single_movie, movie_data, config, destroot, use_rsync, df_lockerdb): movie_data 
+            for movie_data in movies_to_copy
+        }
+        
+        # Process completed tasks with progress tracking
+        for future in tqdm(as_completed(future_to_movie), total=len(movies_to_copy), desc="Copying movies"):
+            movie_data = future_to_movie[future]
+            movie, file_size = movie_data
             
-            # Update progress bars
-            progress_bar.update(1)
-            size_bar.update(file_size)
-            progress_bar.set_postfix({
-                'Current': os.path.basename(movie),
-                'Size': f"{current_size/1024/1024/1024:.2f}GB"
-            })
-            
-        except subprocess.CalledProcessError as e:
-            print(f"Error copying {movie}: {e}")
-            # Try fallback method
             try:
-                shutil.copyfile(src, dest)
-                copied_movies.append(movie)
-                current_size += file_size
+                movie_result, file_size_result, success, error_msg = future.result()
                 
-                # Update CSV file for fallback copy too
-                try:
-                    movie_data = df_lockerdb.loc[movie].copy()
-                    movie_data_dict = movie_data.to_dict()
-                    # Convert to Unix-style path for CSV file
-                    unix_rel_path = movie.replace("\\", "/")
-                    movie_data_dict['rel_path'] = unix_rel_path
-                    # Reset playcount to 0 for the copied movies
-                    movie_data_dict['playcount'] = 0
+                if success:
+                    copied_movies.append(movie_result)
+                    current_size += file_size_result
                     
-                    # Remove actor_rating from movie data
-                    if 'actor_rating' in movie_data_dict:
-                        actor_rating = movie_data_dict.pop('actor_rating')
+                    # Update CSV file after successful copy
+                    try:
+                        # Get the movie data from the main database
+                        movie_data_dict = df_lockerdb.loc[movie_result].copy().to_dict()
+                        # Convert to Unix-style path for CSV file
+                        unix_rel_path = movie_result.replace("\\", "/")
+                        movie_data_dict['rel_path'] = unix_rel_path
+                        # Reset playcount to 0 for the copied movies
+                        movie_data_dict['playcount'] = 0
+                        
+                        actor_rating = movie_data_dict.get('actor_rating', 0)
                         actor_name = movie_data_dict.get('actor', '')
                         
-                        # Add actor to actor_stats.csv if not already processed
-                        if actor_name and actor_name not in processed_actors:
-                            processed_actors.add(actor_name)
-                            
-                            # Read current actor_stats CSV file, append new row, and write back
-                            current_actor_df = pd.read_csv(actor_stats_path)
-                            new_actor_row = {
-                                'actor': actor_name,
-                                'actor_rating': actor_rating,
-                                'actor_category': ''  # Blank as requested
-                            }
-                            new_actor_row_df = pd.DataFrame([new_actor_row])
-                            updated_actor_df = pd.concat([current_actor_df, new_actor_row_df], ignore_index=True)
-                            updated_actor_df.to_csv(actor_stats_path, index=False)
+                        # Update CSV files in thread-safe manner
+                        update_csv_files(movie_result, movie_data_dict, actor_rating, actor_name)
+                        
+                    except Exception as csv_error:
+                        print(f"Warning: Could not update CSV file for {movie_result}: {csv_error}")
+                else:
+                    print(f"Failed to copy {movie_result}: {error_msg}")
                     
-                    current_df = pd.read_csv(csv_path)
-                    new_row_df = pd.DataFrame([movie_data_dict])
-                    updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
-                    updated_df.to_csv(csv_path, index=False)
-                    
-                except Exception as csv_error:
-                    print(f"Warning: Could not update CSV file for {movie}: {csv_error}")
-                
-                progress_bar.update(1)
-                size_bar.update(file_size)
-            except Exception as fallback_error:
-                print(f"Fallback copy also failed for {movie}: {fallback_error}")
-        except Exception as e:
-            print(f"Unexpected error copying {movie}: {e}")
-    
-    # Close progress bars
-    progress_bar.close()
-    size_bar.close()
+            except Exception as e:
+                print(f"Unexpected error processing {movie}: {e}")
 
     # Final summary (CSV files already exist and are up to date)
     if copied_movies:
@@ -563,7 +549,25 @@ def copy_random_movies():
             print(f"Movie database file created: {csv_filename}")
             print(f"Actor stats file created: {actor_stats_filename}")
     
-    print(f"Done copying {len(copied_movies)} new random movies ({current_size/1024/1024/1024:.2f} GB total)")
+    # Calculate and display copy operation summary
+    copy_end_time = time.time()
+    total_copy_time = copy_end_time - copy_start_time
+    
+    # Calculate copying speed
+    speed_mbps = (current_size / 1024 / 1024) / total_copy_time if total_copy_time > 0 else 0
+    
+    print("\n" + "="*60)
+    print("COPY OPERATION COMPLETED")
+    print("="*60)
+    print(f"Files copied successfully: {len(copied_movies)}")
+    print(f"Total size copied: {current_size/1024/1024/1024:.2f} GB")
+    print(f"Total time taken: {total_copy_time/60:.1f} minutes ({total_copy_time:.1f} seconds)")
+    print(f"Average copy speed: {speed_mbps:.1f} MB/s")
+    print(f"Parallel threads used: {max_workers}")
+    if len(movies_to_copy) > len(copied_movies):
+        failed_count = len(movies_to_copy) - len(copied_movies)
+        print(f"Failed copies: {failed_count}")
+    print("="*60 + "\n")
 
 def delete_movie(rel_path):
     global df_lockerdb
