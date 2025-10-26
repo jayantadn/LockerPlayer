@@ -106,6 +106,129 @@ increment_playcount() {
     return 0
 }
 
+# Function to rate the movie
+rate_movie() {
+    if [ -z "$SELECTED_LINE" ]; then
+        echo "Error: No movie selected for rating!"
+        return 1
+    fi
+    
+    if [ ! -f "$EXCEL_FILE" ]; then
+        echo "Error: CSV file $EXCEL_FILE not found!"
+        return 1
+    fi
+    
+    # Get current movie info
+    CURRENT_LINE=$(sed -n "${SELECTED_LINE}p" "$EXCEL_FILE")
+    CURRENT_MOVIE_PATH=$(echo "$CURRENT_LINE" | cut -d',' -f1)
+    CURRENT_MOVIE_RATING=$(echo "$CURRENT_LINE" | cut -d',' -f3)
+    
+    echo "Current movie: $CURRENT_MOVIE_PATH"
+    echo "Current movie rating: $CURRENT_MOVIE_RATING"
+    echo ""
+    
+    while true; do
+        echo -n "Enter new movie rating (0-5, or 'c' to cancel): "
+        read -r new_rating
+        
+        # Check if user wants to cancel
+        if [ "$new_rating" = "c" ] || [ "$new_rating" = "C" ]; then
+            echo "Rating cancelled."
+            return 0
+        fi
+        
+        # Validate numeric input
+        if [[ "$new_rating" =~ ^[0-9]+$ ]] && [ "$new_rating" -ge 0 ] && [ "$new_rating" -le 5 ]; then
+            break
+        else
+            echo "Invalid input. Please enter a number between 0-5, or 'c' to cancel."
+        fi
+    done
+    
+    # Create a temporary file
+    TEMP_FILE=$(mktemp)
+    
+    # Replace the movie rating in the line (3rd field)
+    NEW_LINE=$(echo "$CURRENT_LINE" | awk -F',' -v rating="$new_rating" 'BEGIN{OFS=","} {$3=rating; print}')
+    
+    # Create new CSV with updated movie rating
+    {
+        # Copy header and lines before the selected line
+        sed -n "1,$((SELECTED_LINE-1))p" "$EXCEL_FILE"
+        # Add the updated line
+        echo "$NEW_LINE"
+        # Copy lines after the selected line
+        sed -n "$((SELECTED_LINE+1)),\$p" "$EXCEL_FILE"
+    } > "$TEMP_FILE"
+    
+    # Replace the original file with the updated one
+    mv "$TEMP_FILE" "$EXCEL_FILE"
+    
+    echo "Movie rating updated from $CURRENT_MOVIE_RATING to $new_rating."
+}
+
+# Function to rate the actor
+rate_actor() {
+    # TODO: Implement actor rating functionality
+    echo "Rate actor functionality not yet implemented."
+}
+
+# Function to delete the movie
+delete_movie() {
+    # TODO: Implement movie deletion functionality
+    echo "Delete movie functionality not yet implemented."
+}
+
+# Function to delete the actor
+delete_actor() {
+    # TODO: Implement actor deletion functionality
+    echo "Delete actor functionality not yet implemented."
+}
+
+# Function to show post-play menu
+show_post_play_menu() {
+    while true; do
+        echo ""
+        echo "=== Post-Play Options ==="
+        echo "1. Rate movie"
+        echo "2. Rate actor"
+        echo "3. Delete movie"
+        echo "4. Delete actor"
+        echo "0. Return to main menu"
+        echo -n "Please select an option (0-4): "
+        
+        read -r choice
+        
+        case $choice in
+            1)
+                echo ""
+                rate_movie
+                ;;
+            2)
+                echo ""
+                rate_actor
+                ;;
+            3)
+                echo ""
+                delete_movie
+                ;;
+            4)
+                echo ""
+                delete_actor
+                ;;
+            0)
+                echo ""
+                echo "Returning to main menu..."
+                return 0
+                ;;
+            *)
+                echo ""
+                echo "Invalid option. Please select 0-4."
+                ;;
+        esac
+    done
+}
+
 # Function to play the selected movie
 play_movie() {
     if [ -z "$SELECTED_MOVIE" ]; then
@@ -134,6 +257,9 @@ play_movie() {
     
     # Increment playcount after successful playback
     increment_playcount
+    
+    # Show post-play menu
+    show_post_play_menu
 }
 
 # Function to show menu and handle user input
