@@ -11,6 +11,26 @@ EXCEL_FILE="./LockerDB_mini.csv"
 SELECTED_MOVIE=""
 SELECTED_LINE=""
 
+# Function to count unplayed vs total movies
+count_unplayed_movies() {
+    if [ ! -f "$EXCEL_FILE" ]; then
+        echo "Error: CSV file $EXCEL_FILE not found!"
+        return 1
+    fi
+    
+    # Count total movies (excluding header)
+    TOTAL_MOVIES=$(tail -n +2 "$EXCEL_FILE" | wc -l)
+    
+    # Count movies with playcount = 0 (excluding header)
+    UNPLAYED_COUNT=$(tail -n +2 "$EXCEL_FILE" | awk -F',' '$2 == 0 {count++} END {print count+0}')
+    
+    echo ""
+    echo "Unplayed movies: $UNPLAYED_COUNT / $TOTAL_MOVIES"
+    echo ""
+    
+    return 0
+}
+
 # Function to select a random movie from CSV
 select_random_movie() {
     if [ ! -f "$EXCEL_FILE" ]; then
@@ -39,7 +59,6 @@ select_random_movie() {
     SELECTED_MOVIE="${MOVIE_DIR}${REL_PATH}"
     
     echo "Selected movie: $REL_PATH"
-    echo ""
     
     return 0
 }
@@ -138,7 +157,7 @@ show_menu() {
             0)
                 echo ""
                 echo "Exiting LockerPlayer. Goodbye!"
-                exit 0
+                return 0
                 ;;
             *)
                 echo ""
@@ -157,6 +176,9 @@ main() {
         echo "Please check your configuration."
         echo ""
     fi
+    
+    # Display number of unplayed movies
+    count_unplayed_movies
     
     # Show menu
     show_menu
