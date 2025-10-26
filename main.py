@@ -378,9 +378,19 @@ def copy_random_movies():
     csv_filename = f"LockerDB_mini.csv"
     csv_path = os.path.join(destroot, csv_filename)
     
-    # Create empty dataframe with same structure as the database
-    copied_df = pd.DataFrame(columns=['rel_path'] + df_lockerdb.columns.tolist())
+    # Create empty dataframe with same structure as the database, excluding actor_rating
+    movie_columns = ['rel_path'] + [col for col in df_lockerdb.columns.tolist() if col != 'actor_rating']
+    copied_df = pd.DataFrame(columns=movie_columns)
     copied_df.to_csv(csv_path, index=False)
+    
+    # Create actor_stats.csv file
+    actor_stats_filename = "actor_stats.csv"
+    actor_stats_path = os.path.join(destroot, actor_stats_filename)
+    actor_stats_df = pd.DataFrame(columns=['actor', 'actor_rating', 'actor_category'])
+    actor_stats_df.to_csv(actor_stats_path, index=False)
+    
+    # Track unique actors to avoid duplicates in actor_stats.csv
+    processed_actors = set()
     
     print(f"Starting to copy {len(movies_to_copy)} movies...")
     
@@ -429,6 +439,26 @@ def copy_random_movies():
                 # Reset playcount to 0 for the copied movies
                 movie_data_dict['playcount'] = 0
                 
+                # Remove actor_rating from movie data
+                if 'actor_rating' in movie_data_dict:
+                    actor_rating = movie_data_dict.pop('actor_rating')
+                    actor_name = movie_data_dict.get('actor', '')
+                    
+                    # Add actor to actor_stats.csv if not already processed
+                    if actor_name and actor_name not in processed_actors:
+                        processed_actors.add(actor_name)
+                        
+                        # Read current actor_stats CSV file, append new row, and write back
+                        current_actor_df = pd.read_csv(actor_stats_path)
+                        new_actor_row = {
+                            'actor': actor_name,
+                            'actor_rating': actor_rating,
+                            'actor_category': ''  # Blank as requested
+                        }
+                        new_actor_row_df = pd.DataFrame([new_actor_row])
+                        updated_actor_df = pd.concat([current_actor_df, new_actor_row_df], ignore_index=True)
+                        updated_actor_df.to_csv(actor_stats_path, index=False)
+                
                 # Read current CSV file, append new row, and write back
                 current_df = pd.read_csv(csv_path)
                 new_row_df = pd.DataFrame([movie_data_dict])
@@ -464,6 +494,26 @@ def copy_random_movies():
                     # Reset playcount to 0 for the copied movies
                     movie_data_dict['playcount'] = 0
                     
+                    # Remove actor_rating from movie data
+                    if 'actor_rating' in movie_data_dict:
+                        actor_rating = movie_data_dict.pop('actor_rating')
+                        actor_name = movie_data_dict.get('actor', '')
+                        
+                        # Add actor to actor_stats.csv if not already processed
+                        if actor_name and actor_name not in processed_actors:
+                            processed_actors.add(actor_name)
+                            
+                            # Read current actor_stats CSV file, append new row, and write back
+                            current_actor_df = pd.read_csv(actor_stats_path)
+                            new_actor_row = {
+                                'actor': actor_name,
+                                'actor_rating': actor_rating,
+                                'actor_category': ''  # Blank as requested
+                            }
+                            new_actor_row_df = pd.DataFrame([new_actor_row])
+                            updated_actor_df = pd.concat([current_actor_df, new_actor_row_df], ignore_index=True)
+                            updated_actor_df.to_csv(actor_stats_path, index=False)
+                    
                     current_df = pd.read_csv(csv_path)
                     new_row_df = pd.DataFrame([movie_data_dict])
                     updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
@@ -483,9 +533,10 @@ def copy_random_movies():
     progress_bar.close()
     size_bar.close()
 
-    # Final summary (CSV file already exists and is up to date)
+    # Final summary (CSV files already exist and are up to date)
     if copied_movies:
-        print(f"CSV database file updated with all copied movies: {csv_filename}")
+        print(f"Movie database file updated: {csv_filename}")
+        print(f"Actor stats file updated: {actor_stats_filename}")
     
     print(f"Done copying {len(copied_movies)} random movies ({current_size/1024/1024/1024:.2f} GB total)")
 

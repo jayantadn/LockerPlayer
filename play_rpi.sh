@@ -7,6 +7,7 @@
 MOVIE_DIR="./"
 PLAYER="/usr/bin/vlc"
 EXCEL_FILE="./LockerDB_mini.csv"
+ACTOR_STATS_FILE="./actor_stats.csv"
 
 SELECTED_MOVIE=""
 SELECTED_LINE=""
@@ -59,10 +60,19 @@ select_random_movie() {
     REL_PATH=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f1)
     PLAYCOUNT=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f2)
     MOVIE_RATING=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f3)
-    ACTOR_RATING=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f4)
-    ACTOR=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f5)
-    CATEGORY=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f6)
-    STUDIO=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f7)
+    ACTOR=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f4)
+    CATEGORY=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f5)
+    STUDIO=$(echo "$SELECTED_MOVIE_LINE" | cut -d',' -f6)
+    
+    # Get actor rating from actor_stats.csv
+    if [ -f "$ACTOR_STATS_FILE" ]; then
+        ACTOR_RATING=$(tail -n +2 "$ACTOR_STATS_FILE" | awk -F',' -v actor="$ACTOR" '$1 == actor {print $2; exit}')
+        if [ -z "$ACTOR_RATING" ]; then
+            ACTOR_RATING="0"  # Default if actor not found
+        fi
+    else
+        ACTOR_RATING="0"  # Default if file doesn't exist
+    fi
     
     # Construct full movie path
     SELECTED_MOVIE="${MOVIE_DIR}${REL_PATH}"
@@ -220,8 +230,87 @@ rate_movie() {
 
 # Function to rate the actor
 rate_actor() {
-    # TODO: Implement actor rating functionality
-    echo "Rate actor functionality not yet implemented."
+    if [ -z "$SELECTED_LINE" ]; then
+        echo "Error: No movie selected for actor rating!"
+        return 1
+    fi
+    
+    if [ ! -f "$EXCEL_FILE" ]; then
+        echo "Error: CSV file $EXCEL_FILE not found!"
+        return 1
+    fi
+    
+    if [ ! -f "$ACTOR_STATS_FILE" ]; then
+        echo "Error: Actor stats file $ACTOR_STATS_FILE not found!"
+        return 1
+    fi
+    
+    # Get current movie info to extract actor name
+    CURRENT_LINE=$(sed -n "${SELECTED_LINE}p" "$EXCEL_FILE")
+    ACTOR_NAME=$(echo "$CURRENT_LINE" | cut -d',' -f4)
+    
+    # Get current actor rating from actor_stats.csv
+    CURRENT_ACTOR_RATING=$(tail -n +2 "$ACTOR_STATS_FILE" | awk -F',' -v actor="$ACTOR_NAME" '$1 == actor {print $2; exit}')
+    if [ -z "$CURRENT_ACTOR_RATING" ]; then
+        CURRENT_ACTOR_RATING="0"
+    fi
+    
+    echo "Current actor: $ACTOR_NAME"
+    echo "Current actor rating: $CURRENT_ACTOR_RATING"
+    echo ""
+    
+    while true; do
+        echo -n "Enter new actor rating (0-10, or 'c' to cancel): "
+        read -r new_rating
+        
+        # Check if user wants to cancel
+        if [ "$new_rating" = "c" ] || [ "$new_rating" = "C" ]; then
+            echo "Actor rating cancelled."
+            return 0
+        fi
+        
+        # Validate numeric input
+        if [[ "$new_rating" =~ ^[0-9]+$ ]] && [ "$new_rating" -ge 0 ] && [ "$new_rating" -le 10 ]; then
+            break
+        else
+            echo "Invalid input. Please enter a number between 0-10, or 'c' to cancel."
+        fi
+    done
+    
+    # Create a temporary file for actor stats
+    TEMP_FILE=$(mktemp)
+    
+    # Check if actor exists in actor_stats.csv
+    ACTOR_LINE_NUM=$(tail -n +2 "$ACTOR_STATS_FILE" | awk -F',' -v actor="$ACTOR_NAME" '$1 == actor {print NR+1; exit}')
+    
+    if [ -n "$ACTOR_LINE_NUM" ]; then
+        # Update existing actor rating
+        ACTOR_CURRENT_LINE=$(sed -n "${ACTOR_LINE_NUM}p" "$ACTOR_STATS_FILE")
+        NEW_ACTOR_LINE=$(echo "$ACTOR_CURRENT_LINE" | awk -F',' -v rating="$new_rating" 'BEGIN{OFS=","} {$2=rating; print}')
+        
+        # Create new actor stats file with updated rating
+        {
+            # Copy header and lines before the actor line
+            sed -n "1,$((ACTOR_LINE_NUM-1))p" "$ACTOR_STATS_FILE"
+            # Add the updated line
+            echo "$NEW_ACTOR_LINE"
+            # Copy lines after the actor line
+            sed -n "$((ACTOR_LINE_NUM+1)),\$p" "$ACTOR_STATS_FILE"
+        } > "$TEMP_FILE"
+    else
+        # Add new actor entry
+        {
+            # Copy existing file
+            cat "$ACTOR_STATS_FILE"
+            # Add new actor line
+            echo "$ACTOR_NAME,$new_rating,"
+        } > "$TEMP_FILE"
+    fi
+    
+    # Replace the original file with the updated one
+    mv "$TEMP_FILE" "$ACTOR_STATS_FILE"
+    
+    echo "Actor rating updated from $CURRENT_ACTOR_RATING to $new_rating for $ACTOR_NAME."
 }
 
 # Function to delete the movie
@@ -308,7 +397,7 @@ delete_actor() {
     
     # Get current movie info to extract actor name
     CURRENT_LINE=$(sed -n "${SELECTED_LINE}p" "$EXCEL_FILE")
-    ACTOR_NAME=$(echo "$CURRENT_LINE" | cut -d',' -f5)
+    ACTOR_NAME=$(echo "$CURRENT_LINE" | cut -d',' -f4)
     
     echo "Actor: $ACTOR_NAME"
     echo ""
@@ -338,7 +427,7 @@ delete_actor() {
     
     # Get all movie paths for this actor and delete physical files
     DELETED_COUNT=0
-    while IFS=',' read -r rel_path playcount movie_rating actor_rating actor category studio; do
+    while IFS=',' read -r rel_path playcount movie_rating actor category studio; do
         if [ "$actor" = "$ACTOR_NAME" ]; then
             FULL_MOVIE_PATH="${MOVIE_DIR}${rel_path}"
             if [ -f "$FULL_MOVIE_PATH" ]; then
@@ -359,11 +448,26 @@ delete_actor() {
         # Copy header
         head -n 1 "$EXCEL_FILE"
         # Copy all lines except those with the specified actor
-        tail -n +2 "$EXCEL_FILE" | awk -F',' -v actor="$ACTOR_NAME" '$5 != actor'
+        tail -n +2 "$EXCEL_FILE" | awk -F',' -v actor="$ACTOR_NAME" '$4 != actor'
     } > "$TEMP_FILE"
     
     # Replace the original file with the updated one
     mv "$TEMP_FILE" "$EXCEL_FILE"
+    
+    # Also remove actor from actor_stats.csv if it exists
+    if [ -f "$ACTOR_STATS_FILE" ]; then
+        ACTOR_TEMP_FILE=$(mktemp)
+        {
+            # Copy header
+            head -n 1 "$ACTOR_STATS_FILE"
+            # Copy all lines except the specified actor
+            tail -n +2 "$ACTOR_STATS_FILE" | awk -F',' -v actor="$ACTOR_NAME" '$1 != actor'
+        } > "$ACTOR_TEMP_FILE"
+        
+        # Replace the original file with the updated one
+        mv "$ACTOR_TEMP_FILE" "$ACTOR_STATS_FILE"
+        echo "Removed actor from actor_stats.csv: $ACTOR_NAME"
+    fi
     
     echo "Deleted $DELETED_COUNT physical files."
     echo "Removed all database entries for actor: $ACTOR_NAME"
