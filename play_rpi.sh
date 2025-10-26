@@ -226,14 +226,72 @@ rate_actor() {
 
 # Function to delete the movie
 delete_movie() {
-    # TODO: Implement movie deletion functionality
-    echo "Delete movie functionality not yet implemented."
-}
-
-# Function to delete the actor
-delete_actor() {
-    # TODO: Implement actor deletion functionality
-    echo "Delete actor functionality not yet implemented."
+    if [ -z "$SELECTED_LINE" ]; then
+        echo "Error: No movie selected for deletion!"
+        return 1
+    fi
+    
+    if [ ! -f "$EXCEL_FILE" ]; then
+        echo "Error: CSV file $EXCEL_FILE not found!"
+        return 1
+    fi
+    
+    # Get current movie info
+    CURRENT_LINE=$(sed -n "${SELECTED_LINE}p" "$EXCEL_FILE")
+    CURRENT_MOVIE_PATH=$(echo "$CURRENT_LINE" | cut -d',' -f1)
+    
+    echo "Movie to delete: $CURRENT_MOVIE_PATH"
+    echo ""
+    
+    # Confirm deletion
+    while true; do
+        echo -n "Are you sure you want to delete this movie? (y/n): "
+        read -r confirm
+        
+        case $confirm in
+            [Yy]*)
+                break
+                ;;
+            [Nn]*)
+                echo "Deletion cancelled."
+                return 0
+                ;;
+            *)
+                echo "Please enter 'y' for yes or 'n' for no."
+                ;;
+        esac
+    done
+    
+    # Create/append to to_delete.txt
+    echo "movie=$CURRENT_MOVIE_PATH" >> "./to_delete.txt"
+    echo "Added deletion record to to_delete.txt"
+    
+    # Delete the physical file
+    FULL_MOVIE_PATH="${MOVIE_DIR}${CURRENT_MOVIE_PATH}"
+    if [ -f "$FULL_MOVIE_PATH" ]; then
+        rm "$FULL_MOVIE_PATH"
+        echo "Deleted physical file: $FULL_MOVIE_PATH"
+    else
+        echo "Warning: Physical file not found: $FULL_MOVIE_PATH"
+    fi
+    
+    # Update CSV file by removing the line
+    TEMP_FILE=$(mktemp)
+    
+    # Create new CSV without the deleted movie line
+    {
+        # Copy header and lines before the selected line
+        sed -n "1,$((SELECTED_LINE-1))p" "$EXCEL_FILE"
+        # Skip the selected line (don't copy it)
+        # Copy lines after the selected line
+        sed -n "$((SELECTED_LINE+1)),\$p" "$EXCEL_FILE"
+    } > "$TEMP_FILE"
+    
+    # Replace the original file with the updated one
+    mv "$TEMP_FILE" "$EXCEL_FILE"
+    
+    echo "Movie removed from database."
+    echo "Deletion completed successfully."
 }
 
 # Function to show post-play menu
@@ -244,9 +302,8 @@ show_post_play_menu() {
         echo "1. Rate movie"
         echo "2. Rate actor"
         echo "3. Delete movie"
-        echo "4. Delete actor"
         echo "0. Return to main menu"
-        echo -n "Please select an option (0-4): "
+        echo -n "Please select an option (0-3): "
         
         read -r choice
         
@@ -263,10 +320,6 @@ show_post_play_menu() {
                 echo ""
                 delete_movie
                 ;;
-            4)
-                echo ""
-                delete_actor
-                ;;
             0)
                 echo ""
                 echo "Returning to main menu..."
@@ -274,7 +327,7 @@ show_post_play_menu() {
                 ;;
             *)
                 echo ""
-                echo "Invalid option. Please select 0-4."
+                echo "Invalid option. Please select 0-3."
                 ;;
         esac
     done
@@ -347,6 +400,9 @@ show_menu() {
 
 # Main script execution
 main() {
+    # Clear the screen at startup
+    clear
+    
     # Check if player exists
     if [ ! -f "$PLAYER" ]; then
         echo "Warning: Player $PLAYER not found!"
