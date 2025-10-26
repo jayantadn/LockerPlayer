@@ -1,29 +1,14 @@
 #!/bin/bash
 
 # LockerPlayer - Random Movie Player for Raspberry Pi 3B+
-# Reads config and CSV to play random movies
+# Plays random movies from hardcoded configuration
 
-CONFIG_FILE="config.ini"
+# Hardcoded configuration values
+MOVIE_DIR="./"
+PLAYER="/usr/bin/vlc"
+EXCEL_FILE="./LockerDB_mini.csv"
+
 SELECTED_MOVIE=""
-MOVIE_DIR=""
-PLAYER=""
-EXCEL_FILE=""
-
-# Function to read config file parameters
-read_config() {
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echo "Error: Config file $CONFIG_FILE not found!"
-        exit 1
-    fi
-    
-    # Read MOVIEDIR, PLAYER, and EXCEL from config.ini
-    MOVIE_DIR=$(grep "^MOVIEDIR=" "$CONFIG_FILE" | cut -d'=' -f2)
-    PLAYER=$(grep "^PLAYER=" "$CONFIG_FILE" | cut -d'=' -f2 | tr -d '"')
-    EXCEL_FILE=$(grep "^EXCEL=" "$CONFIG_FILE" | cut -d'=' -f2)
-    
-    # Remove any trailing slashes from MOVIE_DIR and add one
-    MOVIE_DIR=$(echo "$MOVIE_DIR" | sed 's:/*$:/:')
-}
 
 # Function to select a random movie from CSV
 select_random_movie() {
@@ -123,9 +108,6 @@ show_menu() {
 
 # Main script execution
 main() {
-    # Read configuration
-    read_config
-    
     # Check if player exists
     if [ ! -f "$PLAYER" ]; then
         echo "Warning: Player $PLAYER not found!"

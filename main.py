@@ -9,6 +9,7 @@ from send2trash import send2trash
 import configparser
 import subprocess
 from tqdm import tqdm
+import stat
 
 # import custom packages
 from utils import *
@@ -272,6 +273,22 @@ def copy_random_movies():
     # Create destination directory if it doesn't exist
     os.makedirs(destroot, exist_ok=True)
     
+    # Copy shell script to destination first (overwrite if exists)
+    script_name = "play_rpi.sh"
+    script_src = os.path.join(os.path.dirname(__file__), script_name)
+    script_dest = os.path.join(destroot, script_name)
+    
+    if os.path.exists(script_src):
+        try:
+            shutil.copyfile(script_src, script_dest)
+            # Make the shell script executable
+            os.chmod(script_dest, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+            print(f"Copied {script_name} to destination and made it executable")
+        except Exception as e:
+            print(f"Warning: Could not copy {script_name}: {e}")
+    else:
+        print(f"Warning: {script_name} not found in source directory")
+    
     # Calculate available space at destination
     try:
         statvfs = os.statvfs(destroot)
@@ -364,7 +381,6 @@ def copy_random_movies():
     # Create empty dataframe with same structure as the database
     copied_df = pd.DataFrame(columns=['rel_path'] + df_lockerdb.columns.tolist())
     copied_df.to_csv(csv_path, index=False)
-    print(f"Created CSV database file: {csv_filename} (will be updated with each copy)")
     
     print(f"Starting to copy {len(movies_to_copy)} movies...")
     
