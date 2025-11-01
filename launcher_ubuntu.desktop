@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Terminal=true
+Name=LockerPlayer
+Exec=$HOME/Tools/LockerPlayer-main/launcher.sh
+Icon=utilities-terminal
